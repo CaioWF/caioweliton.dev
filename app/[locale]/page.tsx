@@ -6,6 +6,7 @@ import { About } from '@/components/sections/about'
 import { Experience } from '@/components/sections/experience'
 import { Projects } from '@/components/sections/projects'
 import { Skills } from '@/components/sections/skills'
+import { BlogPreview } from '@/components/sections/blog-preview'
 import { Contact } from '@/components/sections/contact'
 import { JsonLd } from '@/components/json-ld'
 import { buildPersonJsonLd } from '@/lib/seo/person-jsonld'
@@ -24,6 +25,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
       <Experience locale={l} />
       <Projects locale={l} />
       <Skills locale={l} />
+      <BlogPreview locale={l} />
       <Contact locale={l} />
     </>
   )

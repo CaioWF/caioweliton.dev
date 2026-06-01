@@ -1,0 +1,20 @@
+---
+title: Como estruturo microserviços Node.js em produção
+date: 2026-05-20
+description: Padrões que uso para manter serviços desacoplados, observáveis e fáceis de evoluir.
+tags: [Node.js, Arquitetura, AWS]
+---
+
+# Como estruturo microserviços Node.js em produção
+
+Depois de alguns anos construindo back-ends que precisam escalar, alguns padrões se repetem. Aqui vão os que mais me ajudam no dia a dia.
+
+## Fronteiras claras
+
+Cada serviço dono do seu dado. Comunicação por contrato explícito — nada de compartilhar tabela entre serviços.
+
+## Observabilidade desde o dia zero
+
+Log estruturado, métricas e tracing distribuído. Sem isso, debugar em produção vira adivinhação.
+
+> Código é só metade do trabalho — operar bem é a outra metade.
