@@ -3,6 +3,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: dark;
+}
+
+.light {
+  color-scheme: light;
 }
 
 @theme inline {
@@ -10,6 +15,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  /* Paleta Terracotta & Stone — tokens de marca */
+  --color-brand-bg: #1c1917;
+  --color-brand-elev: #0c0a09;
+  --color-brand-accent: #d97706;
+  --color-brand-accent-deep: #c2410c;
+  --color-brand-highlight: #fed7aa;
+  --color-brand-ok: #86efac;
 }
 
 @media (prefers-color-scheme: dark) {
