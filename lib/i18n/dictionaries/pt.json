@@ -1,4 +1,4 @@
 {
-  "nav": { "about": "sobre", "experience": "experiência", "projects": "projetos", "blog": "blog", "contact": "contato" },
+  "nav": { "about": "Sobre", "experience": "Experiência", "projects": "Projetos", "blog": "Blog", "contact": "Contato" },
   "hero": { "greeting": "Oi, eu sou o Caio.", "tagline": "Engenheiro de software sênior. Construo back-ends que não quebram às 3 da manhã.", "ctaProjects": "ver projetos", "ctaCv": "baixar CV", "statusAvailable": "disponível p/ conversa" }
 }

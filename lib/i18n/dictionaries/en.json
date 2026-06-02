@@ -1,4 +1,4 @@
 {
-  "nav": { "about": "about", "experience": "experience", "projects": "projects", "blog": "blog", "contact": "contact" },
+  "nav": { "about": "About", "experience": "Experience", "projects": "Projects", "blog": "Blog", "contact": "Contact" },
   "hero": { "greeting": "Hi, I'm Caio.", "tagline": "Senior software engineer. I build back-ends that don't break at 3 a.m.", "ctaProjects": "see projects", "ctaCv": "download CV", "statusAvailable": "open to chat" }
 }

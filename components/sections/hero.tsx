@@ -8,13 +8,13 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
     <section className="relative overflow-hidden px-6 py-20 md:py-28">
       <div className="pointer-events-none absolute -top-20 -right-20 h-80 w-80 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(217,119,6,0.08) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)', opacity: 0.06 }} />
       <Reveal>
       <p className="font-mono text-xs tracking-[0.2em] text-accent mb-5">№ 00 — {locale === 'pt' ? 'INÍCIO' : 'START'}</p>
       <div className="flex flex-col md:flex-row md:items-start gap-8">
         <Avatar />
         <div className="flex-1">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">{dict.hero.greeting}</h1>
+          <h1 className="font-display text-4xl md:text-5xl tracking-tight text-foreground">{dict.hero.greeting}</h1>
           <p className="mt-3 max-w-xl text-muted leading-relaxed">{dict.hero.tagline}</p>
         </div>
       </div>

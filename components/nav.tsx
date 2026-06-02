@@ -10,12 +10,12 @@ export function Nav({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       <Link href={`/${locale}`} className="text-foreground font-bold tracking-tight">
         caio<span className="text-accent">.</span>
       </Link>
-      <div className="hidden md:flex gap-6 text-sm text-muted">
-        <a href="#about">{dict.nav.about}</a>
-        <a href="#experience">{dict.nav.experience}</a>
-        <a href="#projects">{dict.nav.projects}</a>
-        <Link href={`/${locale}/blog`}>{dict.nav.blog}</Link>
-        <a href="#contact" className="text-accent">{dict.nav.contact}</a>
+      <div className="hidden md:flex gap-5 font-mono text-xs text-muted">
+        <Link href={`/${locale}#about`} className="hover:text-accent transition-colors">[ {dict.nav.about} ]</Link>
+        <Link href={`/${locale}#experience`} className="hover:text-accent transition-colors">[ {dict.nav.experience} ]</Link>
+        <Link href={`/${locale}#projects`} className="hover:text-accent transition-colors">[ {dict.nav.projects} ]</Link>
+        <Link href={`/${locale}#blog`} className="hover:text-accent transition-colors">[ {dict.nav.blog} ]</Link>
+        <Link href={`/${locale}#contact`} className="text-accent">[ {dict.nav.contact} ]</Link>
       </div>
       <div className="flex items-center gap-4">
         <ThemeToggle />

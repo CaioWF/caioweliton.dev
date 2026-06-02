@@ -39,7 +39,7 @@ export default async function LocaleLayout({
   const l = locale as Locale
 
   return (
-    <div lang={locale} className="min-h-screen bg-background text-foreground">
+    <div lang={locale} className="min-h-screen text-foreground">
       <SkipLink label={l === 'pt' ? 'Pular para o conteúdo' : 'Skip to content'} />
       <HtmlLang locale={l} />
       <Nav locale={l} dict={dict} />
