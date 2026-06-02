@@ -25,8 +25,8 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
   return (
     <section className="px-6 py-20 max-w-3xl">
-      <p className="font-mono text-xs tracking-[0.2em] text-amber-600 mb-2">№ 06 — BLOG</p>
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-stone-50 mb-8">
+      <p className="font-mono text-xs tracking-[0.2em] text-accent mb-2">№ 06 — BLOG</p>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-8">
         {l === 'pt' ? 'Escritos' : 'Writing'}
       </h1>
       <PostList locale={l} posts={posts} />

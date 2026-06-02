@@ -17,15 +17,15 @@ export function LocaleToggle({ currentLocale }: { currentLocale: Locale }) {
     <span className="font-mono text-xs">
       {locales.map((locale, i) => (
         <span key={locale}>
-          {i > 0 && <span className="text-stone-600"> / </span>}
+          {i > 0 && <span className="text-faint"> / </span>}
           <button
             type="button"
             onClick={() => switchTo(locale)}
             aria-current={locale === currentLocale}
             className={
               locale === currentLocale
-                ? 'text-stone-100'
-                : 'text-stone-500 hover:text-amber-500 transition-colors'
+                ? 'text-foreground'
+                : 'text-faint hover:text-accent transition-colors'
             }
           >
             {locale.toUpperCase()}

@@ -1,5 +1,6 @@
 import type { Locale } from '@/lib/i18n/locales'
 import { SectionHeading } from '@/components/sections/section-heading'
+import { Reveal } from '@/components/reveal'
 
 const TAGS = ['Clean Architecture', 'AWS', 'AI/NLP', 'Liderança Técnica', 'Microserviços']
 
@@ -19,15 +20,17 @@ export function About({ locale }: { locale: Locale }) {
 
   return (
     <section id="about" className="px-6 py-20">
-      <SectionHeading index="01" label={locale === 'pt' ? 'Sobre' : 'About'} title={locale === 'pt' ? 'Quem sou eu' : 'Who I am'} />
-      <div className="max-w-2xl space-y-4 text-stone-400 leading-relaxed">
-        {copy.map((p, i) => <p key={i}>{p}</p>)}
-      </div>
-      <div className="mt-7 flex flex-wrap gap-2">
-        {TAGS.map((t) => (
-          <span key={t} className="font-mono text-xs text-amber-300 border border-amber-900/50 bg-amber-950/30 rounded px-3 py-1">{t}</span>
-        ))}
-      </div>
+      <Reveal>
+        <SectionHeading index="01" label={locale === 'pt' ? 'Sobre' : 'About'} title={locale === 'pt' ? 'Quem sou eu' : 'Who I am'} />
+        <div className="max-w-2xl space-y-4 text-muted leading-relaxed">
+          {copy.map((p, i) => <p key={i}>{p}</p>)}
+        </div>
+        <div className="mt-7 flex flex-wrap gap-2">
+          {TAGS.map((t) => (
+            <span key={t} className="font-mono text-xs text-accent border border-accent/30 bg-accent/10 rounded px-3 py-1">{t}</span>
+          ))}
+        </div>
+      </Reveal>
     </section>
   )
 }

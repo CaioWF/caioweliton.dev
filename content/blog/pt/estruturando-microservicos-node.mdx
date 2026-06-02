@@ -17,4 +17,13 @@ Cada serviço dono do seu dado. Comunicação por contrato explícito — nada d
 
 Log estruturado, métricas e tracing distribuído. Sem isso, debugar em produção vira adivinhação.
 
+
+```ts
+export async function handler(event: SQSEvent) {
+  for (const record of event.Records) {
+    await process(JSON.parse(record.body))
+  }
+}
+```
+
 > Código é só metade do trabalho — operar bem é a outra metade.

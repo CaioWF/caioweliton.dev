@@ -19,7 +19,7 @@ export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
   const mounted = useMounted()
 
-  if (!mounted) return <span className="w-5 text-stone-500" aria-hidden />
+  if (!mounted) return <span className="w-5 text-faint" aria-hidden />
 
   const isDark = resolvedTheme === 'dark'
   return (
@@ -27,7 +27,7 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
-      className="font-mono text-xs text-stone-400 hover:text-amber-500 transition-colors"
+      className="font-mono text-xs text-muted hover:text-accent transition-colors"
     >
       {isDark ? 'light' : 'dark'}
     </button>

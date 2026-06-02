@@ -1,41 +1,55 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  color-scheme: dark;
-}
-
-.light {
-  color-scheme: light;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-highlight: var(--highlight);
+  --color-ok: var(--ok);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@theme {
-  /* Paleta Terracotta & Stone — tokens de marca */
-  --color-brand-bg: #1c1917;
-  --color-brand-elev: #0c0a09;
-  --color-brand-accent: #d97706;
-  --color-brand-accent-deep: #c2410c;
-  --color-brand-highlight: #fed7aa;
-  --color-brand-ok: #86efac;
+:root {
+  --background: #faf7f0;
+  --surface: #f1ece1;
+  --foreground: #1c1917;
+  --muted: #57534e;
+  --faint: #8a8178;
+  --border: #e4ddcf;
+  --accent: #b45309;
+  --accent-strong: #9a3412;
+  --highlight: #92400e;
+  --ok: #15803d;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #1c1917;
+  --surface: #0c0a09;
+  --foreground: #fafaf9;
+  --muted: #a8a29e;
+  --faint: #57534e;
+  --border: #292524;
+  --accent: #d97706;
+  --accent-strong: #c2410c;
+  --highlight: #fed7aa;
+  --ok: #86efac;
+  color-scheme: dark;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+body { background: var(--background); color: var(--foreground); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+pre[data-theme], code[data-theme] { background: var(--surface); }
+pre code { display: grid; }
+.dark [data-theme='light'] { display: none; }
+:root:not(.dark) [data-theme='dark'] { display: none; }

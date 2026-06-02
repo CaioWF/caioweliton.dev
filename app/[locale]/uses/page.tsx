@@ -21,19 +21,19 @@ export default async function UsesPage({ params }: { params: Promise<{ locale: s
 
   return (
     <section className="px-6 py-20 max-w-2xl">
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-stone-50 mb-1">Uses</h1>
-      <p className="font-mono text-xs text-stone-600 mb-10">
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-1">Uses</h1>
+      <p className="font-mono text-xs text-faint mb-10">
         {l === 'pt' ? 'Ferramentas e setup do dia a dia' : 'Daily tools and setup'}
       </p>
       <div className="space-y-8">
         {uses.map((cat) => (
           <div key={cat.label.en}>
-            <h2 className="font-mono text-xs tracking-[0.15em] text-amber-600 mb-3">▹ {cat.label[l].toUpperCase()}</h2>
+            <h2 className="font-mono text-xs tracking-[0.15em] text-accent mb-3">▹ {cat.label[l].toUpperCase()}</h2>
             <div className="space-y-1.5">
               {cat.items.map((it) => (
                 <div key={it.name} className="flex justify-between text-sm">
-                  <span className="text-stone-200">{it.name}</span>
-                  <span className="text-stone-600">{it.note[l]}</span>
+                  <span className="text-foreground">{it.name}</span>
+                  <span className="text-faint">{it.note[l]}</span>
                 </div>
               ))}
             </div>

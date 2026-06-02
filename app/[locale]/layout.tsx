@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { locales, isLocale, type Locale } from '@/lib/i18n/locales'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import { Nav } from '@/components/nav'
+import { HtmlLang } from '@/components/i18n/html-lang'
+import { SkipLink } from '@/components/skip-link'
 import { buildMetadata } from '@/lib/seo/metadata'
 import { site } from '@/data/site'
 
@@ -34,10 +36,14 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound()
   const dict = await getDictionary(locale as Locale)
 
+  const l = locale as Locale
+
   return (
-    <div lang={locale} className="min-h-screen bg-stone-950 text-stone-100">
-      <Nav locale={locale as Locale} dict={dict} />
-      <main>{children}</main>
+    <div lang={locale} className="min-h-screen bg-background text-foreground">
+      <SkipLink label={l === 'pt' ? 'Pular para o conteúdo' : 'Skip to content'} />
+      <HtmlLang locale={l} />
+      <Nav locale={l} dict={dict} />
+      <main id="content" tabIndex={-1}>{children}</main>
     </div>
   )
 }

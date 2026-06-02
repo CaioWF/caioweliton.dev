@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { MDXRemote, type MDXRemoteOptions } from 'next-mdx-remote-client/rsc'
+import rehypePrettyCode from 'rehype-pretty-code'
 import { isLocale, locales, type Locale } from '@/lib/i18n/locales'
 import { getAllPosts, getPostSlugs, getPostSource } from '@/lib/blog/posts'
 import { buildMetadata } from '@/lib/seo/metadata'
@@ -46,18 +47,25 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
   const source = await getPostSource(l, slug)
   if (!meta || !source) notFound()
 
-  const options: MDXRemoteOptions = { parseFrontmatter: true }
+  const options: MDXRemoteOptions = {
+    parseFrontmatter: true,
+    mdxOptions: {
+      rehypePlugins: [
+        [rehypePrettyCode, { theme: { dark: 'github-dark', light: 'github-light' }, keepBackground: false }],
+      ],
+    },
+  }
 
   return (
     <article className="px-6 py-20 max-w-2xl">
       <JsonLd data={buildBlogPostingJsonLd(meta, l)} />
-      <p className="font-mono text-xs text-stone-600 mb-2">{meta.date} · {meta.readingMinutes} min</p>
+      <p className="font-mono text-xs text-faint mb-2">{meta.date} · {meta.readingMinutes} min</p>
       <div className="flex gap-1.5 mb-8 font-mono text-[10px]">
-        {meta.tags.map((t) => <span key={t} className="text-amber-300 bg-amber-950/30 rounded px-2 py-0.5">{t}</span>)}
+        {meta.tags.map((t) => <span key={t} className="text-accent bg-accent/10 rounded px-2 py-0.5">{t}</span>)}
       </div>
       <MDXRemote source={source} options={options} components={components} onError={MdxError} />
-      <div className="mt-12 pt-6 border-t border-stone-900">
-        <a href={`/${l}/blog`} className="font-mono text-xs text-amber-500 hover:text-amber-400">← {l === 'pt' ? 'voltar' : 'back'}</a>
+      <div className="mt-12 pt-6 border-t border-border">
+        <a href={`/${l}/blog`} className="font-mono text-xs text-accent hover:text-accent-strong">← {l === 'pt' ? 'voltar' : 'back'}</a>
       </div>
     </article>
   )
