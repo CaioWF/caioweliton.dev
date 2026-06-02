@@ -27,6 +27,11 @@ export function Contact({ locale }: { locale: Locale }) {
           <a href={site.socials.linkedin} target="_blank" rel="noreferrer" className="hover:text-amber-500">LinkedIn</a>
           <a href={site.socials.medium} target="_blank" rel="noreferrer" className="hover:text-amber-500">Medium</a>
         </div>
+        <div className="mt-10 flex justify-center gap-6 font-mono text-[11px] text-stone-600">
+          <a href={`/${locale}/now`} className="hover:text-amber-500">now</a>
+          <a href={`/${locale}/uses`} className="hover:text-amber-500">uses</a>
+          <a href={`/${locale}/blog`} className="hover:text-amber-500">blog</a>
+        </div>
         <p className="mt-14 pt-6 border-t border-stone-900 font-mono text-[10px] text-stone-700">
           © {new Date().getFullYear()} Caio Weliton
         </p>

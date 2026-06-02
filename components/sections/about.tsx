@@ -7,12 +7,12 @@ export function About({ locale }: { locale: Locale }) {
   const copy = {
     pt: [
       'Engenheiro de software do Ceará com foco em back-end, arquitetura e cloud. Trabalho com Node.js, TypeScript e AWS há 5 anos — da internship a sênior, sempre na mesma direção: sistemas que escalam sem dor de cabeça.',
-      'Atualmente estudo Clean Architecture, AWS avançado e AI aplicada a dev. Faço pós em liderança técnica porque código é só metade do trabalho.',
+      'Atualmente estudo Clean Architecture, AWS avançado e AI aplicada a dev. Fiz uma pós em liderança técnica porque código é só metade do trabalho.',
       'Fora do terminal: cozinha, caminhada e games.',
     ],
     en: [
       'Software engineer from Ceará, Brazil, focused on back-end, architecture and cloud. Five years with Node.js, TypeScript and AWS — from intern to senior, always the same direction: systems that scale without headaches.',
-      'Currently studying Clean Architecture, advanced AWS and AI applied to dev. Pursuing a postgrad in technical leadership because code is only half the job.',
+      'Currently studying Clean Architecture, advanced AWS and AI applied to dev. Completed a postgrad in technical leadership because code is only half the job.',
       'Away from the terminal: cooking, walking and games.',
     ],
   }[locale]
