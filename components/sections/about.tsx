@@ -1,6 +1,5 @@
 import type { Locale } from '@/lib/i18n/locales'
-import { SectionHeading } from '@/components/sections/section-heading'
-import { Reveal } from '@/components/reveal'
+import { Tile } from '@/components/bento/tile'
 
 const TAGS = ['Clean Architecture', 'AWS', 'AI/NLP', 'Liderança Técnica', 'Microserviços']
 
@@ -19,18 +18,15 @@ export function About({ locale }: { locale: Locale }) {
   }[locale]
 
   return (
-    <section id="about" className="px-6 py-20">
-      <Reveal>
-        <SectionHeading index="01" label={locale === 'pt' ? 'Sobre' : 'About'} title={locale === 'pt' ? 'Quem sou eu' : 'Who I am'} />
-        <div className="max-w-2xl space-y-4 text-muted leading-relaxed">
-          {copy.map((p, i) => <p key={i}>{p}</p>)}
-        </div>
-        <div className="mt-7 flex flex-wrap gap-2">
-          {TAGS.map((t) => (
-            <span key={t} className="font-mono text-xs text-accent border border-accent/30 bg-accent/10 rounded px-3 py-1">{t}</span>
-          ))}
-        </div>
-      </Reveal>
-    </section>
+    <Tile id="about" label="sobre" title={locale === 'pt' ? 'Quem sou eu' : 'Who I am'} className="md:col-span-4">
+      <div className="space-y-4 text-muted leading-relaxed">
+        {copy.map((p, i) => <p key={i}>{p}</p>)}
+      </div>
+      <div className="mt-6 flex flex-wrap gap-1.5">
+        {TAGS.map((t) => (
+          <span key={t} className="font-mono text-[10px] text-accent bg-accent/10 border border-accent/20 rounded px-2 py-0.5">{t}</span>
+        ))}
+      </div>
+    </Tile>
   )
 }

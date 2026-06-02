@@ -1,18 +1,17 @@
 import type { Locale } from '@/lib/i18n/locales'
 import { site } from '@/data/site'
-import { Reveal } from '@/components/reveal'
+import { Tile } from '@/components/bento/tile'
 
 export function Contact({ locale }: { locale: Locale }) {
   return (
-    <section id="contact" className="relative overflow-hidden px-6 py-28 text-center">
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="h-72 w-[32rem] max-w-full rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(217,119,6,0.08) 0%, transparent 70%)' }} />
-      </div>
-      <div className="relative">
-        <Reveal>
-          <p className="font-mono text-xs tracking-[0.2em] text-accent mb-4">№ 09 — {locale === 'pt' ? 'CONTATO' : 'CONTACT'}</p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">
+    <Tile id="contact" featured label="contato" className="md:col-span-6">
+      <div className="relative overflow-hidden text-center py-8">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-72 w-[32rem] max-w-full rounded-full"
+            style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)', opacity: 0.08 }} />
+        </div>
+        <div className="relative">
+          <h2 className="font-display text-3xl md:text-4xl tracking-tight text-foreground mb-4">
             {locale === 'pt' ? 'Vamos conversar?' : "Let's talk?"}
           </h2>
           <p className="max-w-md mx-auto text-muted mb-9 leading-relaxed">
@@ -37,8 +36,8 @@ export function Contact({ locale }: { locale: Locale }) {
           <p className="mt-14 pt-6 border-t border-border font-mono text-[10px] text-faint">
             © {new Date().getFullYear()} Caio Weliton
           </p>
-        </Reveal>
+        </div>
       </div>
-    </section>
+    </Tile>
   )
 }
