@@ -26,20 +26,27 @@ export function PostList({ locale, posts }: { locale: Locale; posts: PostMeta[] 
         ))}
       </div>
       <div className="flex flex-col">
-        {shown.map((p) => (
-          <Link key={p.slug} href={`/${locale}/blog/${p.slug}`}
-            className="group flex items-center justify-between py-4 border-b border-border hover:border-muted transition-colors">
-            <div>
-              <div className="text-foreground font-medium group-hover:text-accent transition-colors">{p.title}</div>
-              <div className="flex gap-1.5 items-center mt-1 font-mono text-[10px] text-faint">
-                {p.tags[0] && <span className="text-accent">{p.tags[0]}</span>}
-                <span>·</span>
-                <span>{p.readingMinutes} min</span>
+        {shown.map((p) => {
+          const cls = 'group flex items-center justify-between py-4 border-b border-border hover:border-muted transition-colors'
+          const inner = (
+            <>
+              <div>
+                <div className="text-foreground font-medium group-hover:text-accent transition-colors">{p.title}</div>
+                <div className="flex gap-1.5 items-center mt-1 font-mono text-[10px] text-faint">
+                  {p.tags[0] && <span className="text-accent">{p.tags[0]}</span>}
+                  {p.tags[0] && <span>·</span>}
+                  {p.externalUrl ? <span>{p.source ?? 'externo'} ↗</span> : <span>{p.readingMinutes} min</span>}
+                </div>
               </div>
-            </div>
-            <span className="font-mono text-xs text-faint shrink-0 ml-4">{p.date}</span>
-          </Link>
-        ))}
+              <span className="font-mono text-xs text-faint shrink-0 ml-4">{p.date}</span>
+            </>
+          )
+          return p.externalUrl ? (
+            <a key={p.externalUrl} href={p.externalUrl} target="_blank" rel="noreferrer" className={cls}>{inner}</a>
+          ) : (
+            <Link key={p.slug} href={`/${locale}/blog/${p.slug}`} className={cls}>{inner}</Link>
+          )
+        })}
       </div>
     </div>
   )

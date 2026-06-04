@@ -36,7 +36,7 @@ export function buildCvModel(locale: Locale): CvModel {
       period: j.period[locale],
       bullets: j.bullets[locale],
     })),
-    skills: skills.map((c) => ({ label: c.label[locale], items: c.items })),
+    skills: skills.map((c) => ({ label: c.label[locale], items: c.items.map((i) => i[locale]) })),
     summary: site.summary[locale],
     education: education.map((e) => ({ degree: e.degree[locale], school: e.school, period: e.period, note: e.note?.[locale] })),
     languages: languages.map((l) => ({ name: l.name[locale], level: l.level[locale] })),

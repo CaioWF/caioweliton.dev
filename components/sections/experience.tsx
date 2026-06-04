@@ -10,7 +10,7 @@ export function Experience({ locale }: { locale: Locale }) {
   const job = experience[active]
 
   return (
-    <Tile id="experience" label="experiência" title={locale === 'pt' ? 'Onde trabalhei' : 'Where I worked'} className="md:col-span-6">
+    <Tile id="experience" label={locale === 'pt' ? 'experiência' : 'experience'} className="md:col-span-6">
       <div className="grid md:grid-cols-[200px_1fr] gap-6">
         <div role="tablist" aria-label="empresas" className="flex md:flex-col border-l border-border font-mono">
           {experience.map((j, i) => (

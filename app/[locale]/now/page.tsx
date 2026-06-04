@@ -42,7 +42,7 @@ export default async function NowPage({ params }: { params: Promise<{ locale: st
           ))}
         </ul>
       </Block>
-      <Block label={l === 'pt' ? 'LENDO' : 'READING'}>{now.reading[l]}</Block>
+      {/* <Block label={l === 'pt' ? 'LENDO' : 'READING'}>{now.reading[l]}</Block> */}
       <Block label={l === 'pt' ? 'FORA DO TRABALHO' : 'OFF WORK'}>{now.offwork[l]}</Block>
       <p className="mt-10 text-faint text-xs italic">
         {l === 'pt' ? 'Inspirado no nownownow.com do Derek Sivers.' : 'Inspired by Derek Sivers nownownow.com.'}

@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push({ url: `${SITE_URL}/${locale}/now`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 })
     entries.push({ url: `${SITE_URL}/${locale}/uses`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 })
     for (const post of await getAllPosts(locale)) {
+      if (post.externalUrl) continue // posts externos não têm página no nosso domínio
       entries.push({ url: `${SITE_URL}/${locale}/blog/${post.slug}`, lastModified: new Date(post.date), changeFrequency: 'monthly', priority: 0.6 })
     }
   }

@@ -8,7 +8,7 @@ describe('buildCvModel', () => {
     expect(cv.role).toBe('Senior Software Engineer')
     expect(cv.email).toBe('contato.caioweliton@gmail.com')
     expect(cv.experience[0].company).toBe('Compass UOL')
-    expect(cv.experience[0].role).toBe('Senior Software Developer')
+    expect(cv.experience[0].role).toBe('Software Developer (Mid → Senior)')
     expect(cv.experience[0].bullets.length).toBeGreaterThan(0)
     expect(cv.skills.length).toBeGreaterThanOrEqual(4)
     expect(cv.website).toContain('caioweliton.dev')
@@ -21,7 +21,7 @@ describe('buildCvModel', () => {
   test('localiza para PT', () => {
     const cv = buildCvModel('pt')
     expect(cv.role).toBe('Engenheiro de Software Sênior')
-    expect(cv.experience[0].role).toBe('Desenvolvedor de Software Sênior')
+    expect(cv.experience[0].role).toBe('Desenvolvedor de Software (Pleno → Sênior)')
   })
 })
 

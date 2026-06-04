@@ -19,7 +19,7 @@ export function Projects({ locale }: { locale: Locale }) {
   ]
 
   return (
-    <Tile id="projects" label="projetos" title={locale === 'pt' ? 'O que construí' : 'What I built'} className="md:col-span-6">
+    <Tile id="projects" label={locale === 'pt' ? 'projetos' : 'projects'} className="md:col-span-6">
       <div className="flex gap-2 mb-6 flex-wrap">
         {filters.map((f) => (
           <button
@@ -37,7 +37,7 @@ export function Projects({ locale }: { locale: Locale }) {
             <div className="flex justify-between items-start mb-3">
               <span className="text-accent text-xl">⬡</span>
               <div className="flex gap-3 font-mono text-[10px] text-faint">
-                <span className="uppercase text-accent">{p.type}</span>
+                <span className="uppercase text-accent">{locale === 'pt' ? p.type : p.type === 'pessoal' ? 'personal' : 'professional'}</span>
                 {p.github && <a href={p.github} target="_blank" rel="noreferrer" className="hover:text-muted">GitHub ↗</a>}
                 {p.live && <a href={p.live} target="_blank" rel="noreferrer" className="hover:text-muted">Live ↗</a>}
               </div>

@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import type { Locale } from '@/lib/i18n/locales'
 import type { PostMeta } from './types'
 import { parsePostMeta } from './parse'
+import { externalPosts } from '@/data/external-posts'
 
 const BLOG_DIR = join(process.cwd(), 'content', 'blog')
 
@@ -23,7 +24,7 @@ export async function getAllPosts(locale: Locale): Promise<PostMeta[]> {
       return parsePostMeta(raw, slug)
     }),
   )
-  return metas.sort((a, b) => (a.date < b.date ? 1 : -1))
+  return [...metas, ...externalPosts[locale]].sort((a, b) => (a.date < b.date ? 1 : -1))
 }
 
 export async function getPostSource(locale: Locale, slug: string): Promise<string | null> {

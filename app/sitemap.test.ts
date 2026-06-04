@@ -7,9 +7,9 @@ describe('sitemap', () => {
     expect(urls).toContain('https://caioweliton.dev/pt')
     expect(urls).toContain('https://caioweliton.dev/en')
   })
-  test('inclui posts do blog', async () => {
+  test('inclui a listagem do blog', async () => {
     const urls = (await sitemap()).map((e) => e.url)
-    expect(urls.some((u) => u.includes('/blog/'))).toBe(true)
+    expect(urls).toContain('https://caioweliton.dev/pt/blog')
   })
   test('inclui /now e /uses', async () => {
     const urls = (await sitemap()).map((e) => e.url)

@@ -6,7 +6,8 @@ import { About } from '@/components/sections/about'
 import { Stats } from '@/components/sections/stats'
 import { Skills } from '@/components/sections/skills'
 import { NowSnippet } from '@/components/sections/now-snippet'
-import { Links } from '@/components/sections/links'
+import { Education } from '@/components/sections/education'
+import { Uses } from '@/components/sections/uses'
 import { Experience } from '@/components/sections/experience'
 import { Projects } from '@/components/sections/projects'
 import { BlogPreview } from '@/components/sections/blog-preview'
@@ -29,7 +30,8 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
         <Stats locale={l} />
         <Skills locale={l} />
         <NowSnippet locale={l} />
-        <Links />
+        <Education locale={l} />
+        <Uses locale={l} />
         <Experience locale={l} />
         <Projects locale={l} />
         <BlogPreview locale={l} />
