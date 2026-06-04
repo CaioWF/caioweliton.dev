@@ -27,7 +27,7 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           <div className="text-foreground">{locale === 'pt' ? '5+ anos · Senior SWE · cloud · alta concorrência' : '5+ years · Senior SWE · cloud · high concurrency'}</div>
           <div className="mt-3 flex flex-wrap gap-3">
             <Link href={`/${locale}#projects`} className="rounded-md bg-accent px-4 py-2 font-semibold text-white hover:bg-accent-strong transition-colors">$ {dict.hero.ctaProjects} →</Link>
-            <a href={`/${locale}/cv`} className="rounded-md border border-border px-4 py-2 text-foreground hover:border-accent transition-colors">$ {dict.hero.ctaCv} ↓</a>
+            <a href={`/${locale}/cv`} download className="rounded-md border border-border px-4 py-2 text-foreground hover:border-accent transition-colors">$ {dict.hero.ctaCv} ↓</a>
           </div>
         </div>
       </div>

@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ locale:
   return new Response(new Uint8Array(buffer), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${cvFileName(l)}"`,
+      'Content-Disposition': `attachment; filename="${cvFileName(l)}"`,
       'Cache-Control': 'public, max-age=3600',
     },
   })

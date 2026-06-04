@@ -22,7 +22,7 @@ export function Stats({ locale }: { locale: Locale }) {
         )}
         <div>
           <dt className="text-faint text-[10px] uppercase tracking-wider">CV</dt>
-          <dd><a href={`/${locale}/cv`} className="text-accent hover:text-accent-strong">{locale === 'pt' ? 'Baixar' : 'Download'} ↓</a></dd>
+          <dd><a href={`/${locale}/cv`} download className="text-accent hover:text-accent-strong">{locale === 'pt' ? 'Baixar' : 'Download'} ↓</a></dd>
         </div>
       </dl>
       <div className="mt-4 pt-4 border-t border-border flex flex-col gap-1.5 font-mono text-sm">
