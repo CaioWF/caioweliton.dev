@@ -1,0 +1,53 @@
+---
+title: 'The overselling bug our load test caught'
+date: '2025-12-03'
+description: 'A system sold more stock than it had whenever many people bought at once. How the load test caught the overselling and how we fixed it with row locking, read replicas and Redis.'
+tags: ['Backend', 'Architecture', 'High Concurrency']
+---
+
+# The overselling bug our load test caught
+
+We modernized a legacy system, and the new version had one condition to reach production: pass a heavy load test first. Lots of traffic at once, plenty of stock operations fighting over the same products. It was not optional, it was the gate. If it could not take the load, it would not ship.
+
+We ran the test. And the system sold more than it had in stock.
+
+This is the kind of bug that turns your stomach, because in development everything was green. Each sale, tested on its own, worked just fine. The problem only surfaced when many people bought at the same instant. And that is exactly why the load test existed: to catch the overselling before the customer did.
+
+## The cause was "count and compare"
+
+The sale logic was naive. To decide whether it could still sell, the system counted the sale records for that product and compared them against the stock limit. Something along the lines of "if the amount sold is less than or equal to stock, go ahead and sell".
+
+Under low load this goes unnoticed. One sale at a time, count, compare, write. All good.
+
+Under concurrency it falls apart. Picture the last item in stock and five people buying at the same instant. All five count at the same time, all five see "there is still stock", and all five write. It sold five where there was only one. That is the classic race condition you get when you read a state and act on it in two separate steps, with no guarantee that nobody touched it in between.
+
+## Serializing the row fixed the sale
+
+The fix was to stop trusting the count and let the database be the referee. We created a dedicated, updatable stock table, and started locking the product row during the sale with `SELECT ... FOR UPDATE`.
+
+```sql
+BEGIN;
+-- lock the product row: other sales of the same item wait here
+SELECT qtd FROM estoque WHERE produto_id = ? FOR UPDATE;
+-- if qtd > 0, the app commits the decrement:
+UPDATE estoque SET qtd = qtd - 1 WHERE produto_id = ?;
+COMMIT;
+```
+
+`FOR UPDATE` makes the database process one sale at a time on that row. The second transaction that arrives for the same product waits for the first to finish before it reads. By the time it does read, it already sees the updated stock. No more race, no more overselling.
+
+## But serializing is the opposite of scaling
+
+Here lies the second problem. Locking the row kills the overselling, but it creates a queue. Every sale of the same product now waits on the previous one, and under high concurrency that becomes a bottleneck. It fixes the overselling and tanks the throughput.
+
+The way out was to split the read path from the write path. The storefront, the "how many are left", the listings, all of that is read traffic and tolerates being a few milliseconds stale. We pushed those reads onto MariaDB read replicas, with a Redis cache in front for the hottest ones. With that, the primary database stopped burning effort answering queries and was free to do the one thing only it can do: the writes that need the lock.
+
+Reads and writes want opposite things. Reads want speed and tolerate being a little old. Writes want to be exact. Treating both with the same infrastructure wastes resources on one side and risks consistency on the other.
+
+## What stuck with me
+
+Two lessons I carry into every system under load.
+
+The first: "count and compare" looks like a simple operation, but it is not atomic. Whenever you read a state and decide based on it in separate steps, someone can slip in between. Concurrency exposes that without mercy.
+
+The second: load testing is not checklist bureaucracy. It is what caught the overselling before it turned into lost money and a headache with the customer. The bug did not leak because someone made "handle the load" a real prerequisite, not a "we will test it if there is time left".

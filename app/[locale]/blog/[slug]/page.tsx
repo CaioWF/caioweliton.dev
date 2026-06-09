@@ -57,7 +57,7 @@ export default async function PostPage({ params }: { params: Promise<{ locale: s
   }
 
   return (
-    <article className="px-6 py-20 max-w-2xl">
+    <article className="px-6 py-20 max-w-2xl mx-auto">
       <JsonLd data={buildBlogPostingJsonLd(meta, l)} />
       <p className="font-mono text-xs text-faint mb-2">{meta.date} · {meta.readingMinutes} min</p>
       <div className="flex gap-1.5 mb-8 font-mono text-[10px]">

@@ -8,7 +8,14 @@ export const components: MDXComponents = {
   a: ({ children, href }) => <a href={href} className="text-accent hover:text-accent-strong underline underline-offset-2">{children}</a>,
   ul: ({ children }) => <ul className="list-disc pl-6 my-4 text-muted space-y-1.5">{children}</ul>,
   ol: ({ children }) => <ol className="list-decimal pl-6 my-4 text-muted space-y-1.5">{children}</ol>,
-  code: ({ children }) => <code className="font-mono text-sm bg-surface text-accent rounded px-1.5 py-0.5">{children}</code>,
+  code: ({ children, className, ...props }) =>
+    'data-language' in props ? (
+      // bloco (rehype-pretty-code): pre cuida de fundo/borda/scroll
+      <code className={`${className ?? ''} font-mono text-accent`} {...props}>{children}</code>
+    ) : (
+      // inline
+      <code className="font-mono text-sm bg-surface text-accent rounded px-1.5 py-0.5">{children}</code>
+    ),
   pre: ({ children }) => <pre className="font-mono text-sm bg-background border border-border rounded-lg p-4 my-5 overflow-x-auto">{children}</pre>,
   blockquote: ({ children }) => <blockquote className="border-l-2 border-accent pl-4 my-5 text-muted italic">{children}</blockquote>,
 }

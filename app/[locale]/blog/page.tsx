@@ -24,10 +24,9 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   const posts = await getAllPosts(l)
 
   return (
-    <section className="px-6 py-20 max-w-3xl">
-      <p className="font-mono text-xs tracking-[0.2em] text-accent mb-2">№ 06 — BLOG</p>
+    <section className="px-6 py-20 max-w-5xl mx-auto">
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-8">
-        {l === 'pt' ? 'Escritos' : 'Writing'}
+        {l === 'pt' ? 'Artigos' : 'Articles'}
       </h1>
       <PostList locale={l} posts={posts} />
     </section>

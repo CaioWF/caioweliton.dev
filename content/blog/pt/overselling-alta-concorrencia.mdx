@@ -1,0 +1,53 @@
+---
+title: 'O overselling que o teste de carga pegou'
+date: '2025-12-03'
+description: 'Um sistema vendia mais estoque do que existia quando muita gente comprava junto. Como o teste de carga pegou o overselling e como resolvemos com lock de linha, réplicas de leitura e Redis.'
+tags: ['Backend', 'Arquitetura', 'Alta Concorrência']
+---
+
+# O overselling que o teste de carga pegou
+
+Modernizamos um sistema legado, e a versão nova tinha uma condição pra ir pra produção: passar antes num teste de carga pesado. Muito acesso ao mesmo tempo, um monte de operação de estoque disputando os mesmos produtos. Não era opcional, era o portão. Se não aguentasse, não subia.
+
+Rodamos o teste. E o sistema vendeu mais do que tinha no estoque.
+
+Esse é o tipo de bug que dá um frio na barriga, porque em desenvolvimento estava tudo verde. Cada venda, testada sozinha, funcionava direitinho. O problema só apareceu quando muita gente comprou no mesmo instante. E foi exatamente pra isso que o teste de carga existia: pegar o overselling antes do cliente.
+
+## A causa era "contar e comparar"
+
+A lógica da venda era inocente. Pra saber se ainda podia vender, o sistema contava os registros de venda daquele produto e comparava com o limite de estoque. Algo no espírito de "se a quantidade vendida for menor ou igual ao estoque, pode vender".
+
+Em baixa carga isso passa despercebido. Uma venda por vez, conta, compara, grava. Tudo certo.
+
+Sob concorrência, desmorona. Imagina o último item do estoque e cinco pessoas comprando no mesmo instante. As cinco contam ao mesmo tempo, as cinco veem "ainda tem estoque", e as cinco gravam. Vendeu cinco onde só tinha um. É a race condition clássica de quem lê um estado e age em dois passos separados, sem garantir que ninguém mexeu no meio.
+
+## Serializar a linha consertou a venda
+
+A correção foi parar de confiar na contagem e dar pro banco o papel de árbitro. Criamos uma tabela de estoque dedicada e atualizável, e passamos a travar a linha do produto durante a venda com `SELECT ... FOR UPDATE`.
+
+```sql
+BEGIN;
+-- trava a linha do produto: outras vendas do mesmo item esperam aqui
+SELECT qtd FROM estoque WHERE produto_id = ? FOR UPDATE;
+-- se qtd > 0, a aplicação efetiva a baixa:
+UPDATE estoque SET qtd = qtd - 1 WHERE produto_id = ?;
+COMMIT;
+```
+
+O `FOR UPDATE` faz o banco processar uma venda por vez naquela linha. A segunda transação que chega no mesmo produto espera a primeira terminar antes de ler. Quando ela enfim lê, já enxerga o estoque atualizado. Fim da corrida, fim do overselling.
+
+## Mas serializar é o oposto de escalar
+
+Aí mora o segundo problema. Travar a linha acaba com o overselling, mas cria fila. Toda venda do mesmo produto agora espera a anterior, e sob alta concorrência isso vira gargalo. Conserta o overselling e derruba o throughput.
+
+A saída foi separar o caminho de leitura do caminho de escrita. A vitrine, o "quanto ainda resta", as listagens, tudo isso é leitura e tolera estar alguns milissegundos defasado. Jogamos essas leituras em réplicas de leitura do MariaDB, com um cache Redis na frente pro que é mais quente. Com isso o banco principal parou de gastar fôlego respondendo consulta e ficou livre pra fazer o que só ele pode fazer: as escritas que precisam do lock.
+
+Leitura e escrita querem coisas opostas. Leitura quer velocidade e aguenta estar um pouco velha. Escrita quer ser exata. Tratar as duas com a mesma infra é desperdiçar recurso de um lado e arriscar consistência do outro.
+
+## O que ficou
+
+Duas lições que carrego pra todo sistema sob carga.
+
+A primeira: "contar e comparar" parece uma operação simples, mas não é atômica. Sempre que você lê um estado e decide com base nele em passos separados, alguém pode mexer no meio. Concorrência expõe isso sem dó.
+
+A segunda: teste de carga não é burocracia de checklist. Foi ele que pegou o overselling antes de virar prejuízo e dor de cabeça com cliente. O bug não vazou porque alguém transformou "aguentar carga" num pré-requisito de verdade, não num "se sobrar tempo a gente testa".

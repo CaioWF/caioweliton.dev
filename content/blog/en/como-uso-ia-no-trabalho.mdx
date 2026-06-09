@@ -1,0 +1,60 @@
+---
+title: 'How I use AI at work (and where I don''t trust it)'
+date: '2026-06-08'
+description: 'AI changed how I work, but it did not replace the work. How I use it day to day, from planning to skills and hooks, and above all where I learned not to trust it.'
+tags: ['AI', 'Career', 'Engineering']
+---
+
+# How I use AI at work (and where I don't trust it)
+
+The hype says AI writes the code on its own and that pretty soon nobody will be needed. In my experience, that is not quite how it goes. AI really did change how I work, but it did not replace the work. It changed where I spend my time.
+
+This piece is just about that: how I use AI day to day, with no magic formula, and above all where I learned not to trust it.
+
+## I give context and a plan, I don't ask for loose code
+
+When I started, I did what almost everyone does. I threw out a "build an endpoint that does X" and waited for the magic to happen. It worked for small things and fell apart on anything serious.
+
+What changed was dropping the habit of asking for code and starting to give direction. Before asking for a single line, I explain the project context, the constraints, and we agree on a plan for what will be done. AI is very good at executing inside a clear track, and it gets lost fast without one.
+
+That is how Claude Code fits into my flow. I use it to steer the task, not to outsource the decision. The difference between "do this" and "here is the problem, the context and the plan, now execute this step" is huge in what comes back.
+
+## I encoded the way I work into skills, workflows and hooks
+
+Loose prompting does not scale. If I have to repeat the same instructions every time, sooner or later I forget one and the result comes out crooked.
+
+So I started turning the way I like to work into three things. Skills, which are steps the AI follows for a given kind of task. Workflows, which describe the pipeline of a task from start to finish, from idea to commit. And hooks, which are rules that fire on their own, like blocking a commit that is out of standard before I even notice.
+
+A simple example: I have writing and process rules that run without me asking. I do not depend on remembering them, they act on their own. The effect is that the AI is no longer hostage to my memory. It already works inside my rules by default.
+
+The win here is not the AI writing more code. It is the AI writing the right way, the way we agreed on, without me having to repeat everything every time.
+
+## I review everything, the code is mine
+
+This one is non negotiable. Nothing the AI generates goes in without me reading it.
+
+The AI generates with the same confidence when it is right and when it is wrong. It does not hesitate, it does not add a note saying "heads up, I kind of guessed this part". And when that code breaks in production, the responsibility is not its. It is mine. I am the one who signs off.
+
+So I read everything it writes with the same eye I would use on code from anyone on the team. Reviewing stopped being an optional step and became a central part of the work. Honestly, today I spend more time reviewing than typing, and that is fine. It is supposed to be like this.
+
+## I use it a lot to explore and learn
+
+This is where AI helps me the most. To get into a new stack or language, it is an absurd shortcut. I am studying Go right now and I use it a lot to understand a pattern I do not know, to translate a concept I already own in Node into the way it is done in Go, to digest dense documentation in minutes instead of hours.
+
+Understanding a strange error I have never seen also got much faster. Instead of hunting for an answer across ten browser tabs, I ask, it gives me a starting point, and I take it from there.
+
+The line I hold is this: explore and learn with AI, yes. Decide architecture and trade-offs through it, no. The starting point can come from it, the final choice stays mine, because it is my head that will have to hold up that choice later on.
+
+## I learned where it lies
+
+This one took a while to calibrate. AI gets things wrong, and it gets them wrong in a dangerous way, because it gets them wrong with a face of certainty.
+
+It has handed me a library function that simply does not exist. It has given me a clean, confident answer that was wrong from start to finish. It has delivered code that passed a shallow test and hid a subtle bug, the kind that would only show up under load. None of those came with a warning.
+
+This skepticism did not come for free. It came from getting tripped up a few times and, more than that, from knowing the domain well enough to feel when something smells off. That filter is what decides whether AI becomes a shortcut or a trap. And I apply that filter to myself too, because blindly trusting whatever the tool spits out is exactly the kind of mistake I do not want to make.
+
+## In the end
+
+I do not see AI as a replacement, nor as a threat. I see it as a multiplier. It multiplies whoever already has a way to judge the result, and it gets in the way of whoever does not have that repertoire yet.
+
+For me, in practice, the work has been shifting from typing to judging. Less time writing every line by hand, more time deciding what is worth keeping, what needs to change, and what should not have been suggested at all. I keep learning to do this better. Writing this post, with AI helping me organize the ideas and me cutting out what was not mine, was just one more round of that.
