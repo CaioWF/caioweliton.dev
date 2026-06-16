@@ -10,11 +10,16 @@ import { awards } from '@/data/awards'
 export type CvModel = {
   name: string
   role: string
+  headline: string
   email: string
   location: string
   website: string
   github: string
-  experience: { role: string; company: string; period: string; bullets: string[] }[]
+  experience: {
+    company: string
+    period: string
+    roles: { role: string; period: string; bullets: string[] }[]
+  }[]
   skills: { label: string; items: string[] }[]
   summary: string
   education: { degree: string; school: string; period: string; note?: string }[]
@@ -26,15 +31,19 @@ export function buildCvModel(locale: Locale): CvModel {
   return {
     name: site.name,
     role: site.role[locale],
+    headline: site.headline[locale],
     email: site.email,
     location: site.location[locale],
     website: SITE_URL,
     github: site.socials.github,
     experience: experience.map((j) => ({
-      role: j.role[locale],
       company: j.company,
       period: j.period[locale],
-      bullets: j.bullets[locale],
+      roles: j.roles.map((r) => ({
+        role: r.title[locale],
+        period: r.period[locale],
+        bullets: r.bullets[locale],
+      })),
     })),
     skills: skills.map((c) => ({ label: c.label[locale], items: c.items.map((i) => i[locale]) })),
     summary: site.summary[locale],

@@ -29,8 +29,8 @@ export const projects: Project[] = [
     title: 'Plataforma de alta concorrência',
     type: 'profissional',
     description: {
-      pt: 'Modernização de sistema legado para suportar 20 mil requisições em 15 minutos, com ~2 mil operações de estoque concorrentes, sem overselling e respeitando limites.',
-      en: 'Legacy modernization to handle 20k requests in 15 minutes with ~2k concurrent inventory operations, no overselling, stock limits enforced.',
+      pt: 'Modernização de sistema legado para sustentar picos de alta concorrência, com milhares de operações de estoque simultâneas, sem overselling e respeitando limites.',
+      en: 'Legacy modernization to sustain high-concurrency spikes with thousands of concurrent inventory operations, no overselling, stock limits enforced.',
     },
     stack: ['NestJS', 'Node.js', 'React', 'AWS', 'PostgreSQL'],
     highlight: true,

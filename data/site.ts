@@ -1,6 +1,10 @@
 export const site = {
   name: 'Caio Weliton',
   role: { pt: 'Engenheiro de Software Sênior', en: 'Senior Software Engineer' },
+  headline: {
+    pt: 'Back-ends de alta concorrência · Node.js · TypeScript · AWS · Liderança técnica',
+    en: 'High-concurrency back-ends · Node.js · TypeScript · AWS · Technical leadership',
+  },
   summary: {
     pt: 'Engenheiro de software sênior com 5+ anos em back-end, cloud e arquitetura. Node.js, TypeScript e AWS, com foco em sistemas de alta concorrência, modernização de legado e liderança técnica.',
     en: 'Senior software engineer with 5+ years in back-end, cloud and architecture. Node.js, TypeScript and AWS, focused on high-concurrency systems, legacy modernization and technical leadership.',
