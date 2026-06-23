@@ -1,6 +1,8 @@
 import type { MDXComponents } from 'mdx/types'
+import { HarnessDiagram } from '@/components/blog/harness-diagram'
 
 export const components: MDXComponents = {
+  HarnessDiagram,
   h1: ({ children }) => <h1 className="text-2xl font-bold text-foreground mt-10 mb-4">{children}</h1>,
   h2: ({ children }) => <h2 className="text-xl font-bold text-foreground mt-8 mb-3">{children}</h2>,
   h3: ({ children }) => <h3 className="text-lg font-semibold text-foreground mt-6 mb-2">{children}</h3>,
@@ -17,5 +19,9 @@ export const components: MDXComponents = {
       <code className="font-mono text-sm bg-surface text-accent rounded px-1.5 py-0.5">{children}</code>
     ),
   pre: ({ children }) => <pre className="font-mono text-sm bg-background border border-border rounded-lg p-4 my-5 overflow-x-auto">{children}</pre>,
+  img: ({ src, alt }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={typeof src === 'string' ? src : ''} alt={alt ?? ''} loading="lazy" className="rounded-lg border border-border my-6 w-full" />
+  ),
   blockquote: ({ children }) => <blockquote className="border-l-2 border-accent pl-4 my-5 text-muted italic">{children}</blockquote>,
 }

@@ -1,0 +1,83 @@
+---
+title: 'Não é a IA, é o harness ao redor dela'
+date: '2026-06-23'
+description: 'O hype diz que basta um modelo melhor. Na prática, o que mudou meu resultado com IA não foi o modelo, foi a camada de estrutura, regras e ferramentas em volta dele. Sobre harness, e o scaffolder que construí pra parar de montar isso na mão.'
+tags: ['IA', 'Agentes', 'Engenharia']
+---
+
+# Não é a IA, é o harness ao redor dela
+
+Tem uma ideia que volta sempre na conversa sobre IA: que basta um modelo melhor e o resto se resolve. Sai modelo novo, todo mundo corre atrás, e a expectativa é que dessa vez a máquina vai entregar sozinha. Na minha experiência não é o modelo que trava o resultado. É o que está ao redor dele.
+
+Esse "ao redor" tem nome, um termo que a comunidade adotou: harness. É a camada de estrutura, regras e ferramentas que decide como o agente trabalha, e não o que ele sabe. Esse texto é sobre isso, porque foi onde eu mais aprendi nos últimos meses, e onde mais vi diferença no que sai do outro lado.
+
+<HarnessDiagram locale="pt" />
+
+O fluxo que aparece no diagrama, do brainstorm ao review, tem nome: Spec-Driven Development, ou SDD (desenvolvimento guiado por especificação). A especificação vem antes do código, e cada etapa só abre quando a anterior fecha. É a espinha do harness que eu uso, e volto nele mais pra frente.
+
+## O que é um harness
+
+Pensa no modelo como um motor. Ele tem potência de sobra. O harness é o chassi, a transmissão, os freios. É o que transforma potência em movimento que vai pra onde você quer, em vez de girar a roda no vazio.
+
+Na prática, o harness é tudo que cerca a chamada ao modelo:
+
+- O que ele pode ver: o contexto, os arquivos, o histórico.
+- O que ele pode fazer: as ferramentas, os comandos liberados.
+- Em que ordem ele trabalha: primeiro entender, depois planejar, só então escrever.
+- O que ele não pode fazer, e isso costuma ser a parte mais importante.
+
+O modelo é a parte que mais chama atenção, mas é a parte que eu menos controlo. O harness é a parte que eu controlo inteira.
+
+## Por que isso importa
+
+Um modelo bom é capaz, mas indisciplinado. Ele quer agradar. Se você pede uma feature, ele tende a escrever a feature inteira de uma vez, pular a etapa de entender o problema, e no fim "consertar" o teste que ficou vermelho pra te entregar algo verde. Não é má fé. É que o objetivo dele é fechar a tarefa, e ele vai pelo caminho mais curto.
+
+O problema é que o caminho mais curto e o caminho certo raramente são o mesmo. Quem programa há um tempo sabe que metade do trabalho é resistir à tentação de já sair codando. A IA não tem esse freio por conta própria. O harness é esse freio.
+
+A virada pra mim foi parar de tentar consertar isso no prompt. Eu passava tempo escrevendo instruções cada vez mais longas pedindo pra ele "não pular etapas", "não commitar antes de revisar", "fazer o plano primeiro". E ele concordava, dizia que ia fazer, e às vezes fazia. Instrução em prompt é um pedido. O modelo pode honrar ou não. O que eu queria era garantia, e garantia não mora no prompt.
+
+## Os blocos que eu uso
+
+Com o tempo o meu harness virou um conjunto de peças que se repetem em quase todo projeto.
+
+**Plano antes de código.** Nada de implementação sem uma spec e um plano aprovados antes. Não é cerimônia. É o momento em que os erros são baratos de corrigir. Mudar um parágrafo de plano custa segundos. Mudar a arquitetura depois de pronto custa um dia.
+
+**Fases com porta.** O fluxo tem etapas (entender, especificar, planejar, implementar, revisar) e cada etapa só abre quando a anterior fechou. O padrão é negar. Se o estado do projeto não prova que a fase anterior terminou, a próxima não começa.
+
+**Regra mecânica, não confiança.** As regras que importam não vivem no prompt, vivem em hooks que rodam fora do modelo. Se a regra é "não commitar com teste vermelho", quem decide isso é um hook, não a boa vontade do agente. Eu não dependo de ele lembrar. Ele simplesmente não consegue.
+
+**Subagente que não commita.** Quando eu disparo um agente pra implementar uma parte, ele implementa, testa e reporta. Só isso. Quem junta tudo e commita sou eu, depois de revisar. Isso evita que uma decisão errada de um agente vire fato consumado no histórico.
+
+**Loop de review antes de fechar.** Antes de considerar pronto, passa por uma revisão, às vezes de outro agente, com outro olhar. Achou problema, volta. Confiança não basta, a verificação é que fecha.
+
+Nenhuma dessas peças é genial sozinha. O efeito vem de todas juntas, sempre, sem depender de eu lembrar de pedir.
+
+## Keel: parar de fazer isso na mão
+
+Por um tempo eu montava esse harness na unha em cada projeto. Copiava hook de um, regra de outro, refazia o fluxo do zero. Funcionava, mas era frágil e cada projeto ficava um pouco diferente.
+
+Então eu codifiquei tudo num scaffolder. Chamei de Keel. É um bootstrap que instala o fluxo inteiro em qualquer projeto: a cadeia de etapas, os gates que bloqueiam fase, os hooks que aplicam as regras, os templates de spec e de plano. Um comando, e o projeto nasce com a disciplina embutida.
+
+A ideia central do Keel é simples: a disciplina não pode depender de quem está no comando naquele dia, humano ou agente. Ela tem que estar no projeto, aplicada por código, não por lembrança. Os hooks são Node puro, sem dependência externa, porque eu queria poder ler e auditar cada linha que roda na minha máquina, e porque menos dependência de terceiro é menos superfície pra dar errado.
+
+A espinha é essa cadeia de SDD:
+
+```
+brainstorming -> prd -> spec -> plan -> tasks -> implement -> review
+```
+
+Cada seta é uma porta. Você não atravessa sem fechar a etapa anterior. Ele é open source, está no meu GitHub se você quiser ver como as peças se encaixam: [github.com/CaioWF/keel](https://github.com/CaioWF/keel).
+
+## Onde eu não exagero
+
+Harness demais vira burocracia, e burocracia mata a velocidade que a IA te deu em primeiro lugar. Corrigir um typo não precisa de spec. Renomear uma variável não precisa de plano aprovado. Se eu aplicasse o ritual completo em tudo, eu teria trocado um problema (agente indisciplinado) por outro (processo que engessa).
+
+Então o harness tem escape. Tarefa trivial pula o fluxo, e eu deixo explícito que pulei. O critério não é "sempre seguir o processo", é "mecanizar a disciplina onde ela paga". Em mudança grande e arriscada, o ritual inteiro. Em mudança pequena e óbvia, direto ao ponto.
+
+Achar esse limite levou tempo. No começo eu errava pros dois lados: ora processo de menos e o agente fazia besteira, ora processo de mais e eu gastava mais tempo administrando o fluxo do que teria gasto fazendo na mão.
+
+## O que eu levo disso
+
+A parte difícil de trabalhar com IA não foi achar o prompt mágico. Foi decidir o que o agente não pode fazer, e construir as paredes que garantem isso sem eu precisar vigiar.
+
+O modelo vai continuar melhorando, e isso é ótimo. Mas o ganho que eu vi no dia a dia não veio de esperar o próximo modelo. Veio de levar a sério o entorno, a parte chata, a parte que ninguém posta print. O harness não é glamouroso. É só o que faz a diferença entre uma demo que impressiona e uma ferramenta em que eu confio pra trabalhar.

@@ -76,3 +76,31 @@ pre[data-theme], code[data-theme] { background: var(--surface); }
 pre code { display: grid; }
 .dark [data-theme='light'] { display: none; }
 :root:not(.dark) [data-theme='dark'] { display: none; }
+
+/* Diagrama harness — animações (stages flutuam, fluxo percorre o arco) */
+@keyframes harness-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes harness-flow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -106; }
+}
+@keyframes harness-gate-pulse {
+  0%, 8%, 100% {
+    transform: rotate(45deg) scale(1);
+    background-color: var(--background);
+    box-shadow: none;
+  }
+  3% {
+    transform: rotate(45deg) scale(1.5);
+    background-color: var(--accent);
+    box-shadow: 0 0 6px 1px var(--accent);
+  }
+}
+.harness-float { animation: harness-float 4s ease-in-out infinite; }
+.harness-flow { animation: harness-flow 5s linear infinite; }
+.harness-gate { animation: harness-gate-pulse 5s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .harness-float, .harness-flow, .harness-gate { animation: none; }
+}

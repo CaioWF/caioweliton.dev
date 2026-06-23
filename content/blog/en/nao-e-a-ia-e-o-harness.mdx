@@ -1,0 +1,83 @@
+---
+title: "It's not the AI, it's the harness around it"
+date: '2026-06-23'
+description: 'The hype says a better model fixes everything. In practice, what changed my results with AI was not the model, it was the layer of structure, rules and tooling around it. On harnesses, and the scaffolder I built to stop wiring this by hand.'
+tags: ['AI', 'Agents', 'Engineering']
+---
+
+# It's not the AI, it's the harness around it
+
+There is one idea that keeps coming back in every conversation about AI: that a better model is all you need and the rest sorts itself out. A new model ships, everyone rushes to it, and the expectation is that this time the machine will deliver on its own. In my experience the model is not what holds the result back. What holds it back is everything around the model.
+
+That "around it" has a name the community has settled on: the harness. It is the layer of structure, rules and tooling that decides how the agent works, not what it knows. This piece is about that, because it is where I learned the most over the last few months, and where I saw the biggest difference in what comes out the other side.
+
+<HarnessDiagram locale="en" />
+
+The flow in the diagram, from brainstorm to review, has a name: Spec-Driven Development, or SDD. The spec comes before the code, and each stage only opens when the previous one closes. It is the spine of the harness I use, and I come back to it later.
+
+## What a harness is
+
+Think of the model as an engine. It has plenty of power. The harness is the chassis, the transmission, the brakes. It is what turns power into motion that goes where you want, instead of spinning the wheel in place.
+
+In practice, the harness is everything that wraps the call to the model:
+
+- What it can see: the context, the files, the history.
+- What it can do: the tools, the commands it is allowed to run.
+- In what order it works: understand first, then plan, only then write.
+- What it is not allowed to do, and that is usually the most important part.
+
+The model is the part that gets all the attention, but it is the part I control the least. The harness is the part I control entirely.
+
+## Why it matters
+
+A good model is capable, but undisciplined. It wants to please. If you ask for a feature, it tends to write the whole feature at once, skip the step of understanding the problem, and then "fix" the test that came out red so it can hand you something green. It is not bad faith. Its goal is to close the task, and it takes the shortest path.
+
+The problem is that the shortest path and the right path are rarely the same. Anyone who has been coding for a while knows that half the job is resisting the urge to start writing code right away. The AI does not have that brake on its own. The harness is that brake.
+
+The turning point for me was to stop trying to fix this in the prompt. I spent time writing longer and longer instructions asking it to "not skip steps", "not commit before reviewing", "do the plan first". And it agreed, said it would, and sometimes did. An instruction in a prompt is a request. The model can honor it or not. What I wanted was a guarantee, and a guarantee does not live in the prompt.
+
+## The building blocks I use
+
+Over time my harness became a set of pieces that repeat in almost every project.
+
+**Plan before code.** No implementation without an approved spec and plan first. It is not ceremony. It is the moment when mistakes are cheap to fix. Changing a paragraph of a plan costs seconds. Changing the architecture after it is built costs a day.
+
+**Phases with a gate.** The flow has stages (understand, specify, plan, implement, review) and each stage only opens when the previous one is closed. The default is to deny. If the state of the project does not prove the previous phase finished, the next one does not start.
+
+**Mechanical rules, not trust.** The rules that matter do not live in the prompt, they live in hooks that run outside the model. If the rule is "do not commit with a failing test", a hook decides that, not the agent's good will. I do not depend on it remembering. It simply cannot.
+
+**Subagents that do not commit.** When I dispatch an agent to implement a part, it implements, tests and reports. That is it. I am the one who puts it all together and commits, after reviewing. This keeps a wrong decision by one agent from becoming a done deal in the history.
+
+**A review loop before closing.** Before I call it done, it goes through a review, sometimes by another agent with a fresh pair of eyes. If it finds a problem, it goes back. Trust is not enough, verification is what closes the loop.
+
+None of these pieces is brilliant on its own. The effect comes from all of them together, every time, without depending on me remembering to ask.
+
+## Keel: to stop wiring this by hand
+
+For a while I built this harness by hand in every project. I copied a hook from one, a rule from another, rebuilt the flow from scratch. It worked, but it was fragile and each project ended up a little different.
+
+So I codified all of it into a scaffolder. I called it Keel. It is a bootstrap that installs the whole flow into any project: the chain of stages, the gates that block a phase, the hooks that enforce the rules, the spec and plan templates. One command, and the project is born with the discipline built in.
+
+The core idea of Keel is simple: the discipline cannot depend on whoever is at the wheel that day, human or agent. It has to live in the project, enforced by code, not by memory. The hooks are plain Node with no external dependency, because I wanted to be able to read and audit every line that runs on my machine, and because less third-party dependency means less surface for things to go wrong.
+
+The spine is this SDD chain:
+
+```
+brainstorming -> prd -> spec -> plan -> tasks -> implement -> review
+```
+
+Each arrow is a gate. You do not cross it without closing the previous stage. It is open source, on my GitHub if you want to see how the pieces fit together: [github.com/CaioWF/keel](https://github.com/CaioWF/keel).
+
+## Where I do not overdo it
+
+Too much harness becomes bureaucracy, and bureaucracy kills the speed the AI gave you in the first place. Fixing a typo does not need a spec. Renaming a variable does not need an approved plan. If I applied the full ritual to everything, I would have traded one problem (an undisciplined agent) for another (a process that locks everything up).
+
+So the harness has an escape hatch. A trivial task skips the flow, and I make it explicit that I skipped it. The criterion is not "always follow the process", it is "mechanize the discipline where it pays off". For a large, risky change, the whole ritual. For a small, obvious change, straight to the point.
+
+Finding that line took time. At first I got it wrong in both directions: sometimes too little process and the agent did something dumb, sometimes too much process and I spent more time managing the flow than I would have spent doing the work by hand.
+
+## What I take from this
+
+The hard part of working with AI was not finding the magic prompt. It was deciding what the agent is not allowed to do, and building the walls that guarantee it without me having to stand guard.
+
+The model will keep getting better, and that is great. But the gains I saw day to day did not come from waiting for the next model. They came from taking the surroundings seriously, the boring part, the part nobody posts a screenshot of. The harness is not glamorous. It is just what makes the difference between a demo that impresses and a tool I trust to work with.
