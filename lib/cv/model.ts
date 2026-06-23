@@ -36,6 +36,8 @@ export function buildCvModel(locale: Locale): CvModel {
     location: site.location[locale],
     website: SITE_URL,
     github: site.socials.github,
+    linkedin: site.socials.linkedin,
+    linkedin: site.socials.linkedin,
     experience: experience.map((j) => ({
       company: j.company,
       period: j.period[locale],
