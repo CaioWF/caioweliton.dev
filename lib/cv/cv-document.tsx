@@ -102,6 +102,7 @@ function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
     { text: model.location },
     { text: stripProtocol(model.website), href: model.website },
     { text: stripProtocol(model.github), href: model.github },
+    { text: stripProtocol(model.linkedin).replace(/^www\./, ''), href: model.linkedin },
   ]
   const t = LABELS[locale]
 
