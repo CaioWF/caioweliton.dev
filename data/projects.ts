@@ -32,7 +32,7 @@ export const projects: Project[] = [
       pt: 'Modernização de sistema legado para sustentar picos de alta concorrência, com milhares de operações de estoque simultâneas, sem overselling e respeitando limites.',
       en: 'Legacy modernization to sustain high-concurrency spikes with thousands of concurrent inventory operations, no overselling, stock limits enforced.',
     },
-    stack: ['NestJS', 'Node.js', 'React', 'AWS', 'PostgreSQL'],
+    stack: ['NestJS', 'Node.js', 'React', 'AWS', 'MariaDB'],
     highlight: true,
   },
   {
