@@ -1,0 +1,69 @@
+---
+title: "The map before the question: I tried Google's OKF in my harness"
+date: '2026-07-01'
+description: "Google shipped an open spec that turns documentation into agent context, no tool call needed. I implemented it in my harness scaffolder. How it works, what it solves, and where this first version still falls short."
+tags: ['AI', 'Agents', 'Engineering']
+---
+
+# The map before the question: I tried Google's OKF in my harness
+
+Every agent session starts the same way: it does not know what already exists in the project. If you have an architecture spec, a domain glossary, an ADR explaining why the choice was this and not that, the agent only finds out if it reads, and it only reads if it asks, and it only asks if it knows the thing exists. That costs a tool call, costs a turn, and sometimes the agent does not even ask, it just reinvents.
+
+On June 12th Google Cloud published a spec for exactly this problem: Open Knowledge Format, or OKF. The idea is simple. An organization keeps knowledge as a folder of markdown with YAML frontmatter, one required field (`type`), and wiki-links between files form the graph. No proprietary platform, no SDK, no lock-in. It is just files.
+
+I decided to test it in the harness scaffolder I use on every new project, Keel.
+
+## The problem this solves
+
+I have written before that what the agent can see is one of the parts I control. The problem is that "can see" is not the same as "sees". A project can have a spec, a plan, an ADR, a domain sheet, everything documented. If the agent does not know it exists, it might as well not exist for it. It starts the session blind, and it either asks, or assumes, or reinvents.
+
+What I wanted was a map that arrived ready in the first message, without the agent burning a turn asking whether a doc about X exists.
+
+## How it landed in Keel
+
+It became a SessionStart hook, `okf-index.mjs`. It runs before the agent sees the first message, no external tool dependency, plain Node:
+
+```js
+const ROOTS = ["docs", "specs", ".specify/memory"];
+
+// Minimal frontmatter parse: key:value lines inside the leading --- ... --- block.
+function frontmatter(text) {
+  if (!text.startsWith("---")) return null;
+  const end = text.indexOf("\n---", 3);
+  if (end < 0) return null;
+  const fm = {};
+  for (const line of text.slice(3, end).split("\n")) {
+    const m = line.match(/^([A-Za-z0-9_-]+):\s*(.+?)\s*$/);
+    if (m) fm[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+  return fm;
+}
+```
+
+It walks `docs/`, `specs/` and `.specify/memory/`, picks up every `.md` that has `type:` in its frontmatter, pulls `[[wiki-links]]` out of the body, and groups by type. The output becomes context injected before the first turn:
+
+```
+Open Knowledge Format index — 12 concept(s), zero tool calls:
+
+[table]
+  orders (specs/feat-x/orders.md) -> line-items, users
+
+[metric]
+  mrr (docs/mrr.md)
+```
+
+The agent reads this and already knows what exists, how it relates, and where it is, without opening a single file. It only opens what it actually needs.
+
+## Why zero tool calls matters
+
+It sounds like a small detail, but it is the same logic as the rest of the harness. A rule that depends on the agent remembering to ask is a fragile rule. If discovering existing docs depends on it thinking to ask, at some point it will not, and it will reinvent a table that is already specced, or contradict an ADR it never read. Putting the index in front of it before anything else removes that dependency.
+
+## Where this first version still limps
+
+Worth being upfront: this is v0.1, and there is a lot of room to improve. Today it is read only. The agent reads the index, but there is no convention for writing back into OKF format, like creating a new concept following the spec on its own. It does not have the reserved files the spec suggests, `index.md` and `log.md`, for directory listing and change history. The frontmatter parser is naive, just `key: value` lines, no support for nested structure. And the 60-concept cap exists to keep the injection's token cost bounded, but on a large project that can cut relevant information before it should.
+
+None of that invalidates the idea. This is the first attempt at fitting the spec into the flow, and I will keep adjusting as real usage friction shows up. I will post the evolution as it improves.
+
+## What I take from this
+
+The pattern repeats: context the agent already has by default beats context that only shows up if it remembers to ask. OKF is a recent, still somewhat raw way to mechanize that on the documentation side. The spec is new, my implementation is even newer. If you are testing this too, or already hit the same limits, I want to hear about it.

@@ -1,0 +1,69 @@
+---
+title: 'O mapa antes da pergunta: testei o OKF do Google no meu harness'
+date: '2026-07-01'
+description: 'Google lançou um spec aberto pra transformar documentação em contexto de agente, sem tool call. Implementei no meu scaffolder de harness. Como funciona, o que resolve, e onde essa primeira versão ainda deixa a desejar.'
+tags: ['IA', 'Agentes', 'Engenharia']
+---
+
+# O mapa antes da pergunta: testei o OKF do Google no meu harness
+
+Toda sessão de agente começa do mesmo jeito: ele não sabe o que já existe no projeto. Se você tem uma spec de arquitetura, um glossário de domínio, um ADR explicando por que a escolha foi essa e não aquela, o agente só descobre se ler, e só lê se pedir, e só pede se souber que aquilo existe. Isso custa tool call, custa turno, e às vezes o agente nem pergunta, só reinventa.
+
+Dia 12 de junho a Google Cloud publicou um spec pra esse problema: Open Knowledge Format, ou OKF. A ideia é simples. A organização guarda conhecimento como pasta de markdown com frontmatter YAML, um campo obrigatório (`type`), e wiki-links entre arquivos formam o grafo. Sem plataforma proprietária, sem SDK, sem lock-in. É só arquivo.
+
+Resolvi testar isso no scaffolder de harness que eu uso em todo projeto novo, o Keel.
+
+## O problema que isso resolve
+
+Já escrevi antes que o que o agente pode ver é uma das partes que eu controlo. O problema é que "pode ver" não é a mesma coisa que "vê". Um projeto pode ter spec, plano, ADR, ficha de domínio, tudo documentado. Se o agente não souber que aquilo existe, é como se não existisse pra ele. Ele começa a sessão cego, e ou pergunta, ou assume, ou reinventa.
+
+O que eu queria era um mapa que já chegasse pronto na primeira mensagem, sem o agente gastar turno perguntando se existe doc sobre X.
+
+## Como ficou no Keel
+
+Virou um hook de SessionStart, `okf-index.mjs`. Roda antes do agente ver a primeira mensagem, sem depender de ferramenta externa, só Node puro:
+
+```js
+const ROOTS = ["docs", "specs", ".specify/memory"];
+
+// Minimal frontmatter parse: key:value lines inside the leading --- ... --- block.
+function frontmatter(text) {
+  if (!text.startsWith("---")) return null;
+  const end = text.indexOf("\n---", 3);
+  if (end < 0) return null;
+  const fm = {};
+  for (const line of text.slice(3, end).split("\n")) {
+    const m = line.match(/^([A-Za-z0-9_-]+):\s*(.+?)\s*$/);
+    if (m) fm[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+  return fm;
+}
+```
+
+Ele varre `docs/`, `specs/` e `.specify/memory/`, pega todo `.md` que tenha `type:` no frontmatter, extrai `[[wiki-links]]` do corpo, e agrupa por tipo. O output vira contexto injetado antes do primeiro turno:
+
+```
+Open Knowledge Format index — 12 concept(s), zero tool calls:
+
+[table]
+  orders (specs/feat-x/orders.md) -> line-items, users
+
+[metric]
+  mrr (docs/mrr.md)
+```
+
+O agente lê isso e já sabe o que existe, como se relaciona, e onde está, sem abrir um único arquivo. Só abre o que precisa de fato.
+
+## Por que zero tool call importa
+
+Parece detalhe pequeno, mas é a mesma lógica do resto do harness. Regra que depende do agente lembrar de perguntar é regra frágil. Se descobrir doc existente depende dele pensar em perguntar, alguma hora ele não pensa, e reinventa uma tabela que já tá especificada, ou contradiz um ADR que ele nunca leu. Botar o índice na cara dele antes de qualquer coisa tira essa dependência.
+
+## Onde essa primeira versão ainda deixa a desejar
+
+Vale deixar claro: isso é v0.1, e tem espaço grande pra melhorar. Hoje é só leitura. O agente lê o índice, mas não tem convenção pra escrever de volta no formato OKF, tipo criar um concept novo seguindo o spec sozinho. Não tem os arquivos reservados que o spec sugere, `index.md` e `log.md`, pra listar diretório e histórico de mudança. O parser de frontmatter é ingênuo, só linha `key: value`, sem suportar estrutura aninhada. E o limite de 60 concepts existe pra não estourar o custo de token da injeção, mas em projeto grande isso pode cortar informação relevante antes da hora.
+
+Nada disso invalida a ideia. É a primeira tentativa de encaixar o spec no fluxo, e vou ajustar conforme aparecer atrito de uso real. Postarei a evolução conforme for melhorando.
+
+## O que fica
+
+O padrão se repete: contexto que o agente já tem por padrão vale mais que contexto que só aparece se ele lembrar de pedir. OKF é um jeito recente e ainda cru de mecanizar isso do lado da documentação. O spec é novo, minha implementação é mais nova ainda. Se você também tá testando, ou já bateu de frente com os mesmos limites, quero saber.
