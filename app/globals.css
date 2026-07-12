@@ -101,6 +101,14 @@ pre code { display: grid; }
 .harness-float { animation: harness-float 4s ease-in-out infinite; }
 .harness-flow { animation: harness-flow 5s linear infinite; }
 .harness-gate { animation: harness-gate-pulse 5s linear infinite; }
+
+/* Diagrama OKF — as arestas (links markdown) pulsam juntas, em fase (4s = período dos nós) */
+@keyframes okf-pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.85; }
+}
+.okf-pulse { animation: okf-pulse 4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .harness-float, .harness-flow, .harness-gate { animation: none; }
+  .harness-float, .harness-flow, .harness-gate, .okf-pulse { animation: none; }
 }

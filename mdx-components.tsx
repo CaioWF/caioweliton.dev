@@ -1,8 +1,10 @@
 import type { MDXComponents } from 'mdx/types'
 import { HarnessDiagram } from '@/components/blog/harness-diagram'
+import { OkfGraphDiagram } from '@/components/blog/okf-graph-diagram'
 
 export const components: MDXComponents = {
   HarnessDiagram,
+  OkfGraphDiagram,
   h1: ({ children }) => <h1 className="text-2xl font-bold text-foreground mt-10 mb-4">{children}</h1>,
   h2: ({ children }) => <h2 className="text-xl font-bold text-foreground mt-8 mb-3">{children}</h2>,
   h3: ({ children }) => <h3 className="text-lg font-semibold text-foreground mt-6 mb-2">{children}</h3>,
