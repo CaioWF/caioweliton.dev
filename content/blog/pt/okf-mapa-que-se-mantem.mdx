@@ -1,0 +1,69 @@
+---
+title: 'O mapa que se mantém sozinho: a segunda rodada do OKF no meu harness'
+date: '2026-07-12'
+description: 'Na primeira versão o agente só lia o mapa da documentação. Agora ele escreve nele, mantém atualizado, e os links viraram grafo de verdade. O que mudou no OKF do Keel e por que cada peça existe.'
+tags: ['IA', 'Agentes', 'Engenharia']
+---
+
+# O mapa que se mantém sozinho: a segunda rodada do OKF no meu harness
+
+Há duas semanas escrevi sobre testar o [Open Knowledge Format](/blog/okf-mapa-antes-da-pergunta) no Keel, meu scaffolder de harness. A ideia era simples: em vez do agente começar cada sessão cego, um hook varre a documentação e injeta um índice antes do primeiro turno. O agente já sabe o que existe e onde está, sem gastar tool call perguntando.
+
+Aquilo era a v0.1, e eu fui honesto sobre o que faltava. Era um mapa que só se lia. O agente enxergava o índice, mas não sabia escrever de volta no formato. Não tinha os arquivos reservados que o spec pede. Os links eram uma invenção minha que só o meu hook entendia. Prometi postar a evolução conforme fosse melhorando. Melhorou bastante, então aqui está.
+
+<OkfGraphDiagram locale="pt" />
+
+## De ler o mapa a desenhar o mapa
+
+O buraco maior da v0.1 era esse: o agente lia, mas não contribuía. Você passa um documento novo, ele resume na hora, responde, e joga fora. Da próxima sessão, esquece tudo. É um bibliotecário que lê cada livro que chega e não cataloga nenhum.
+
+A resposta virou uma skill nova, a `okf-enrich`. O modelo mental é o que o Karpathy chamou de "LLM wiki": o humano faz a curadoria das fontes, escolhe o que merece entrar na biblioteca, e o agente faz o trabalho de bibliotecário, destilando aquilo em páginas de conceito, catalogando e cruzando referências.
+
+Na prática, você entrega uma fonte (um arquivo, uma URL, um texto colado, um repo) e o loop roda:
+
+1. **Lê e extrai conceitos.** Não uma página por parágrafo, e sim as entidades, decisões, APIs e padrões que merecem existir sozinhos.
+2. **Confere os tipos que já existem.** Antes de inventar um tipo novo de conceito, reusa um que já esteja na biblioteca. É a mesma disciplina de whitelist que aplico no resto do harness: os tipos permitidos são os que já existem, tipo novo só pra algo genuinamente novo. Isso evita a biblioteca virar um caos de sinônimos, com `tabela`, `table`, `entidade` e `modelo` pra mesma coisa.
+3. **Escreve ou atualiza as páginas.** Cada conceito ganha frontmatter (`type`, `title`, `description`, `timestamp`) e um corpo que **sempre termina em `# Citations`**, com toda afirmação rastreável até a origem. Se a página já existe, ele **funde** os fatos novos, nunca sobrescreve.
+4. **Atualiza o índice e registra a mudança** no `log.md`, o histórico reservado que o spec pede, sempre com o mais recente no topo.
+
+Uma regra que faço questão: a skill **nunca commita**. Ela destila e organiza, o humano revisa e decide o que fica. Curadoria continua sendo minha; o trabalho braçal é dele.
+
+## Um índice que mente é pior que índice nenhum
+
+A v0.1 não tinha o `index.md` que o spec reserva pra listar o diretório. Agora tem, gerado por um comando (`okf-build-index build`) a partir dos conceitos que existem de fato.
+
+Gerar o arquivo é a parte fácil. O problema real é ele apodrecer. Um índice desatualizado é aquele quadro de "lojas do shopping" que ainda aponta pra uma loja que mudou de andar há seis meses: pior que não ter quadro nenhum, porque você confia e vai pro lugar errado. Se o agente confia num índice que mente, ele age errado com toda a certeza do mundo.
+
+Por isso o gerador tem um par: `okf-build-index check`. Ele regenera o índice em memória e compara byte a byte com o que está no disco. Se divergiram, o commit é bloqueado. O índice não pode ficar velho porque a porta do commit não abre enquanto ele estiver velho. A garantia é mecânica, não depende de eu lembrar de rodar de novo.
+
+## Um andar de cada vez
+
+A v0.1 tinha um limite bruto de 60 conceitos, existindo só pra injeção não estourar o custo de token. Num projeto grande, isso cortava informação boa antes da hora.
+
+A saída foi o que o OKF chama de *progressive disclosure*, e a analogia é literal. Um prédio grande não põe todas as salas numa lista só no saguão. O saguão lista os andares; cada andar lista as suas salas. Você desce a hierarquia só até onde precisa.
+
+O `index.md` agora funciona igual: em vez de uma lista gigante na raiz, cada diretório ganha o seu. A raiz carrega a versão do OKF, os conceitos dela, e uma seção de subdiretórios apontando pros índices filhos. Cada filho lista os seus e aponta pra baixo. Bundle grande se navega diretório por diretório, não numa parede de texto. E o `check` compara a árvore inteira, então nenhum andar fica desatualizado.
+
+## Deixar de falar só a minha língua
+
+Esse foi o conserto conceitual mais importante, e o mais chato de admitir. Na v0.1 os links entre documentos eram `[[wiki-links]]`, uma sintaxe que eu inventei e que só o meu hook sabia ler. Era jargão interno. Bonito no papel, inútil pra qualquer outra ferramenta: o GitHub não renderiza, o editor não clica, o próprio spec do OKF prefere outra coisa.
+
+Troquei tudo por **links markdown relativos** de verdade: `[Gate vs skill](gates-vs-skills.md)`. A diferença é sair de uma gíria particular pra língua comum. Agora o mesmo link que forma a aresta do grafo interno também é clicável no GitHub, resolve em qualquer renderizador de markdown, e sobrevive fora do Keel. Deixei de precisar de um tradutor pra ler os meus próprios documentos.
+
+O efeito colateral foi honesto e mensurável: quando cruzei os próprios docs do Keel com links reais, o grafo saiu de zero arestas pra sete. Não era falha da ferramenta, já que a detecção de link estava lá, coberta por teste. Era falha de conteúdo: eu tinha documentos que se relacionavam e nunca disseram isso um pro outro.
+
+## E dá pra ver o grafo
+
+Fechei com um visualizador, o `okf-visualize`. Ele lê os conceitos e os cruzamentos e cospe **um** arquivo HTML self-contained: um grafo force-directed em JavaScript puro, nós coloridos por tipo, com legenda e descrição no hover. Zero URL externa, abrindo direto do `file://`, sem servidor.
+
+O visualizador oficial do OKF depende de GCP e Python. O meu roda offline, em qualquer bundle, sem instalar nada. É o mapa do metrô do conhecimento do projeto: você bate o olho e vê os aglomerados, os nós isolados, o que devia se conectar e não conecta.
+
+## Onde essa versão ainda peca
+
+Continuo sendo honesto sobre os limites. O parser de frontmatter ainda é ingênuo: linha `key: value`, sem estrutura aninhada. A disciplina de whitelist de tipos depende do agente respeitar os tipos existentes; o lint pega órfãos e contradições, mas quem cura de verdade sou eu. E o grafo ainda é ralo: sete arestas é melhor que zero, mas é um projeto que documentei aos poucos, e boa parte do conhecimento ainda mora na minha cabeça, não em página cruzada. A ferramenta amadureceu mais rápido que o conteúdo que ela organiza.
+
+Nada disso me incomoda. O ciclo é esse: implemento a peça, uso, o atrito aparece, ajusto. A v0.1 era um mapa que se lia. Essa é um mapa que se escreve, se mantém e se enxerga. A próxima aperta o que ainda falta.
+
+## O que fica
+
+O padrão de sempre: contexto que o agente já tem por padrão vale mais que contexto que só aparece se ele lembrar de pedir. A diferença dessa rodada é que agora o mapa se mantém sozinho. O agente ajuda a desenhá-lo, um gate impede que ele minta, e os links falam uma língua que o mundo inteiro entende. O spec ainda é novo, minha implementação anda rápido. Se você também tá mexendo com OKF, ou bateu de frente com os mesmos limites, quero saber.
