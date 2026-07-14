@@ -1,11 +1,15 @@
 import type { Locale } from '@/lib/i18n/locales'
-import { site } from '@/data/site'
+import { site, yearsOfExperience } from '@/data/site'
 import { experience } from '@/data/experience'
 import { skills } from '@/data/skills'
 import { SITE_URL } from '@/lib/seo/site-url'
 import { education } from '@/data/education'
 import { languages } from '@/data/languages'
 import { awards } from '@/data/awards'
+import { projects } from '@/data/projects'
+
+// Telefone só no CV (fora de data/site.ts, que é bundlado no client público).
+const CV_PHONE = '+55 88 99621-2524'
 
 export type CvModel = {
   name: string
@@ -26,6 +30,8 @@ export type CvModel = {
   education: { degree: string; school: string; period: string; note?: string }[]
   languages: { name: string; level: string }[]
   awards: string[]
+  phone: string
+  projects: { name: string; description: string; stack: string[]; link?: string }[]
 }
 
 export function buildCvModel(locale: Locale): CvModel {
@@ -48,10 +54,14 @@ export function buildCvModel(locale: Locale): CvModel {
       })),
     })),
     skills: skills.map((c) => ({ label: c.label[locale], items: c.items.map((i) => i[locale]) })),
-    summary: site.summary[locale],
+    summary: site.summary[locale].replace('{{years}}', String(yearsOfExperience())),
     education: education.map((e) => ({ degree: e.degree[locale], school: e.school, period: e.period, note: e.note?.[locale] })),
     languages: languages.map((l) => ({ name: l.name[locale], level: l.level[locale] })),
     awards: awards.map((a) => a[locale]),
+    phone: CV_PHONE,
+    projects: projects
+      .filter((p) => p.type === 'pessoal')
+      .map((p) => ({ name: p.title, description: p.description[locale], stack: p.stack, link: p.live ?? p.github })),
   }
 }
 

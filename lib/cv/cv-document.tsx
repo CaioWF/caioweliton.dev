@@ -1,21 +1,13 @@
-import path from 'node:path'
 import { Document, Page, View, Text, Link, StyleSheet, Font, renderToBuffer } from '@react-pdf/renderer'
 import type { Locale } from '@/lib/i18n/locales'
 import { parseEmphasis } from '@/lib/text/emphasis'
 import type { CvModel } from './model'
 
-// Fonte embutida (IBM Plex Sans). Continua texto vetorial selecionável -> ATS lê normal.
-// Resolvido em runtime a partir do cwd; o tracing do standalone copia para ./lib/cv/fonts.
-const FONT_DIR = path.join(process.cwd(), 'lib', 'cv', 'fonts')
-Font.register({
-  family: 'IBM Plex Sans',
-  fonts: [
-    { src: path.join(FONT_DIR, 'IBMPlexSans-Regular.ttf'), fontWeight: 400 },
-    { src: path.join(FONT_DIR, 'IBMPlexSans-Medium.ttf'), fontWeight: 500 },
-    { src: path.join(FONT_DIR, 'IBMPlexSans-SemiBold.ttf'), fontWeight: 600 },
-    { src: path.join(FONT_DIR, 'IBMPlexSans-Bold.ttf'), fontWeight: 700 },
-  ],
-})
+// Fonte: Helvetica (padrão-14 do PDF, NÃO embutida). O react-pdf tem um bug de ToUnicode que
+// corrompe ligaduras fi/fl na CAMADA DE TEXTO de QUALQUER fonte embutida (testado: IBM Plex e
+// Roboto extraem "Defni/flas/fcam"; Helvetica extrai "Defini/filas/ficam"). Como o ATS lê a
+// camada de texto, fonte padrão é obrigatória para as keywords não corromperem.
+const FONT_FAMILY = 'Helvetica'
 
 // Não quebrar palavras com hífen no meio (legibilidade + ATS).
 Font.registerHyphenationCallback((word) => [word])
@@ -23,8 +15,8 @@ Font.registerHyphenationCallback((word) => [word])
 const stripProtocol = (url: string) => url.replace(/^https?:\/\//, '')
 
 const LABELS = {
-  pt: { experience: 'Experiência', skills: 'Competências', education: 'Formação', languages: 'Idiomas', awards: 'Certificações & Prêmios' },
-  en: { experience: 'Experience', skills: 'Skills', education: 'Education', languages: 'Languages', awards: 'Certifications & Awards' },
+  pt: { experience: 'Experiência', skills: 'Competências', education: 'Formação', languages: 'Idiomas', awards: 'Certificações & Prêmios', projects: 'Projetos' },
+  en: { experience: 'Experience', skills: 'Skills', education: 'Education', languages: 'Languages', awards: 'Certifications & Awards', projects: 'Projects' },
 } as const
 
 // Paleta neutra profissional + um único acento navy (headers + títulos de cargo).
@@ -35,7 +27,7 @@ const RULE = '#d1d5db'
 const ACCENT = '#1e40af'
 
 const s = StyleSheet.create({
-  page: { paddingVertical: 44, paddingHorizontal: 50, fontSize: 10, color: BODY, fontFamily: 'IBM Plex Sans', lineHeight: 1.45 },
+  page: { paddingVertical: 44, paddingHorizontal: 50, fontSize: 10, color: BODY, fontFamily: FONT_FAMILY, lineHeight: 1.45 },
   name: { fontSize: 22, fontWeight: 700, color: INK, lineHeight: 1.2 },
   role: { fontSize: 11, fontWeight: 500, color: '#4b5563', marginTop: 2, lineHeight: 1.3 },
   headline: { fontSize: 9, color: MUTED, marginTop: 3 },
@@ -51,13 +43,13 @@ const s = StyleSheet.create({
   job: { marginBottom: 12 },
   company: { fontSize: 10.5, fontWeight: 700, color: INK },
   roleEntry: { marginTop: 5, paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' },
-  roleTitle: { fontSize: 9.5, fontWeight: 600, color: ACCENT },
+  roleTitle: { fontSize: 9.5, fontWeight: 700, color: ACCENT },
   jobHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 3 },
   period: { fontSize: 9, color: MUTED },
   bullet: { flexDirection: 'row', marginBottom: 2.5, paddingRight: 6 },
   bulletDot: { width: 10, color: MUTED },
   bulletText: { flex: 1, color: BODY },
-  bulletStrong: { fontWeight: 600, color: INK },
+  bulletStrong: { fontWeight: 700, color: INK },
   skill: { flexDirection: 'row', marginBottom: 4 },
   skillLabel: { width: 124, paddingRight: 8, fontWeight: 700, color: INK },
   skillItems: { flex: 1, color: BODY, lineHeight: 1.4 },
@@ -72,11 +64,19 @@ const s = StyleSheet.create({
   award: { flexDirection: 'row', marginBottom: 2.5, paddingRight: 6 },
   awardDot: { width: 10, color: MUTED },
   awardText: { flex: 1, color: BODY },
+  project: { marginBottom: 8 },
+  projectHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 1 },
+  projectName: { fontSize: 10.5, fontWeight: 700, color: INK },
+  projectLink: { fontSize: 9, color: ACCENT, textDecoration: 'none' },
+  projectDesc: { color: BODY, marginBottom: 2, lineHeight: 1.3 },
+  projectStack: { fontSize: 9, color: MUTED },
 })
 
 function SectionHeader({ children }: { children: string }) {
+  // minPresenceAhead: header não fica órfão no rodapé — se não há espaço pro início
+  // do conteúdo, o header desce junto pra próxima página.
   return (
-    <View style={s.h2row}>
+    <View style={s.h2row} minPresenceAhead={48} wrap={false}>
       <View style={s.h2mark} />
       <Text style={s.h2}>{children}</Text>
     </View>
@@ -99,6 +99,7 @@ function Bullet({ text }: { text: string }) {
 function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
   const contacts = [
     { text: model.email, href: `mailto:${model.email}` },
+    { text: model.phone, href: `tel:${model.phone.replace(/[^+\d]/g, '')}` },
     { text: model.location },
     { text: stripProtocol(model.website), href: model.website },
     { text: stripProtocol(model.github), href: model.github },
@@ -107,7 +108,7 @@ function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
   const t = LABELS[locale]
 
   return (
-    <Document title={`CV — ${model.name}`} author={model.name}>
+    <Document title={`CV ${model.name}`} author={model.name}>
       <Page size="A4" style={s.page}>
         <Text style={s.name}>{model.name}</Text>
         <Text style={s.role}>{model.role}</Text>
@@ -128,34 +129,41 @@ function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
         <Text style={s.summary}>{model.summary}</Text>
 
         <View style={s.section}>
-          <SectionHeader>{t.experience}</SectionHeader>
-          {model.experience.map((j, i) => (
-            <View key={i} style={s.job}>
-              <View style={s.jobHeader}>
-                <Text style={s.company}>{j.company}</Text>
-                <Text style={s.period}>{j.period}</Text>
-              </View>
-              {j.roles.map((r, ri) => (
-                <View key={ri} wrap={false} style={s.roleEntry}>
-                  <View style={s.jobHeader}>
-                    <Text style={s.roleTitle}>{r.role}</Text>
-                    <Text style={s.period}>{r.period}</Text>
-                  </View>
-                  {r.bullets.map((b, k) => (
-                    <Bullet key={k} text={b} />
-                  ))}
-                </View>
-              ))}
+          <SectionHeader>{t.skills}</SectionHeader>
+          {model.skills.map((c, i) => (
+            <View key={i} style={s.skill} wrap={false}>
+              <Text style={s.skillLabel}>{c.label}</Text>
+              <Text style={s.skillItems}>{c.items.join(', ')}</Text>
             </View>
           ))}
         </View>
 
         <View style={s.section}>
-          <SectionHeader>{t.skills}</SectionHeader>
-          {model.skills.map((c, i) => (
-            <View key={i} style={s.skill} wrap={false}>
-              <Text style={s.skillLabel}>{c.label}</Text>
-              <Text style={s.skillItems}>{c.items.join(' · ')}</Text>
+          <SectionHeader>{t.experience}</SectionHeader>
+          {model.experience.map((j, i) => (
+            <View key={i} style={s.job}>
+              {j.roles.map((r, ri) => (
+                <View key={ri}>
+                  {ri === 0 && (
+                    // minPresenceAhead: empresa não fica órfã (fica junto do cargo/1º bullet).
+                    <View style={s.jobHeader} minPresenceAhead={64}>
+                      <Text style={s.company}>{j.company}</Text>
+                      <Text style={s.period}>{j.period}</Text>
+                    </View>
+                  )}
+                  {/* roleEntry SEM wrap={false}: bullets fluem entre páginas (enchem a página,
+                      evita vão). minPresenceAhead mantém título do cargo com o 1º bullet. */}
+                  <View style={s.roleEntry} minPresenceAhead={40}>
+                    <View style={s.jobHeader}>
+                      <Text style={s.roleTitle}>{r.role}</Text>
+                      <Text style={s.period}>{r.period}</Text>
+                    </View>
+                    {r.bullets.map((b, k) => (
+                      <Bullet key={k} text={b} />
+                    ))}
+                  </View>
+                </View>
+              ))}
             </View>
           ))}
         </View>
@@ -175,6 +183,16 @@ function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
         </View>
 
         <View style={s.section}>
+          <SectionHeader>{t.awards}</SectionHeader>
+          {model.awards.map((a, i) => (
+            <View key={i} style={s.award}>
+              <Text style={s.awardDot}>•</Text>
+              <Text style={s.awardText}>{a}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={s.section}>
           <SectionHeader>{t.languages}</SectionHeader>
           {model.languages.map((l, i) => (
             <View key={i} style={s.langRow}>
@@ -184,15 +202,25 @@ function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
           ))}
         </View>
 
-        <View style={s.section}>
-          <SectionHeader>{t.awards}</SectionHeader>
-          {model.awards.map((a, i) => (
-            <View key={i} style={s.award}>
-              <Text style={s.awardDot}>•</Text>
-              <Text style={s.awardText}>{a}</Text>
-            </View>
-          ))}
-        </View>
+        {model.projects.length > 0 && (
+          <View style={s.section}>
+            <SectionHeader>{t.projects}</SectionHeader>
+            {model.projects.map((p, i) => (
+              <View key={i} style={s.project} wrap={false}>
+                <View style={s.projectHeader}>
+                  <Text style={s.projectName}>{p.name}</Text>
+                  {p.link && <Link src={p.link} style={s.projectLink}>{stripProtocol(p.link)}</Link>}
+                </View>
+                <Text style={s.projectDesc}>
+                  {parseEmphasis(p.description).map((seg, k) =>
+                    seg.bold ? <Text key={k} style={s.bulletStrong}>{seg.text}</Text> : seg.text,
+                  )}
+                </Text>
+                <Text style={s.projectStack}>{p.stack.join(', ')}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </Page>
     </Document>
   )
