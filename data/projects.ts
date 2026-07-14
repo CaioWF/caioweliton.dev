@@ -17,11 +17,23 @@ export const projects: Project[] = [
     title: 'iBolão',
     type: 'pessoal',
     description: {
-      pt: 'SaaS de bolão da Copa 2026: cria bolão em segundos, convite por link, ranking ao vivo e upgrade premium. Auth, e-mails transacionais e LGPD completos.',
-      en: 'World Cup 2026 betting-pool SaaS: create a pool in seconds, invite by link, live ranking and premium upgrades. Full auth, transactional emails and LGPD compliance.',
+      pt: 'SaaS de bolão da Copa 2026: cria bolão em segundos, convite por link, ranking ao vivo e upgrade premium via Mercado Pago. Autenticação (Clerk), e-mails transacionais e privacy by design: dados de pagamento ficam no gateway, não na aplicação (LGPD).',
+      en: 'World Cup 2026 betting-pool SaaS: create a pool in seconds, invite by link, live ranking and premium upgrade via Mercado Pago. Auth (Clerk), transactional emails and privacy by design: payment data stays in the gateway, not the application (LGPD).',
     },
-    stack: ['NestJS', 'Prisma', 'PostgreSQL', 'React', 'TypeScript', 'Clerk'],
+    stack: ['NestJS', 'Prisma', 'PostgreSQL', 'React', 'TypeScript', 'Clerk', 'Mercado Pago'],
     live: 'https://ibolao.cqlabs.com.br',
+    highlight: true,
+  },
+  {
+    slug: 'keel',
+    title: 'Keel',
+    type: 'pessoal',
+    description: {
+      pt: 'Scaffolder de desenvolvimento spec-driven (SDD) zero-dependência: instala em qualquer projeto o fluxo completo spec -> plano -> gates -> review via templates, skills e hooks/gates mecânicos (phase-gate default-deny, pre-commit, doc-gate) que impõem a disciplina a agentes de IA (Claude Code, Codex, Cursor, Copilot).',
+      en: 'Zero-dependency spec-driven development (SDD) scaffolder: drops the full spec -> plan -> gates -> review flow into any project via templates, skills and mechanical hooks/gates (default-deny phase gate, pre-commit, doc gate) that enforce discipline on AI coding agents (Claude Code, Codex, Cursor, Copilot).',
+    },
+    stack: ['Spec-Driven Development', 'Agentic Workflows', 'Claude Code'],
+    github: 'https://github.com/CaioWF/keel',
     highlight: true,
   },
   {

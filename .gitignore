@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .superpowers/
+
+# CV: variante por vaga (montada pelo Claude Code, descartável) + saída gerada — local-only
+data/cv-tailored.local.ts
+/cv-out/
