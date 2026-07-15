@@ -30,6 +30,17 @@ Depois de renderizar o PDF default (PT) **e copiá-lo pro Downloads** (passo 6),
 
 Não encerrar o turno sem esses dois itens.
 
+## Texto "Apresente-se!" da Gupy (quando pedirem carta/pitch de apresentação)
+
+Formulário Gupy tem campo opcional "Apresente-se!" (limite ~1500 caracteres) + seleção de até 3 habilidades. Quando o usuário pedir esse texto:
+
+- **Sem travessões** (nada de `—` nem `–`). Usar vírgula, "e", dois-pontos ou frase nova.
+- **Linguagem human-like / conversacional**, primeira pessoa. Nada de tom robótico ou bullet-speak. Soar como o Caio falando, não como CV.
+- **Honesto sobre gaps**: se falta algo que a vaga pede, transformar em curiosidade/vontade de aprender, nunca fingir experiência.
+- **Fatos reais só** (mesmos guardrails do CV). Puxar da vaga o desafio central e conectar à trajetória.
+- Respeitar o limite de caracteres (contar; alvo ~1200-1400).
+- Para as 3 habilidades: escolher as que batem nos requisitos inegociáveis/título da vaga entre os chips do cadastro; explicar a escolha e oferecer swap.
+
 ## Guardrails (NÃO negociáveis)
 
 - **Nunca inventar fato.** Datas, cargos, empresas, números (1M+ atletas, 5+ devs), stack — imutáveis por vaga. Só muda **seleção e ênfase**. Se a vaga pede algo que Caio não tem, omite — não fabrica.
