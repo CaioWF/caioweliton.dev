@@ -63,7 +63,7 @@ export const experience: Job[] = [
     roles: [
       {
         title: { pt: 'Desenvolvedor de Software Júnior', en: 'Junior Software Developer' },
-        period: { pt: 'jan 2021 - jan 2022', en: 'Jan 2021 - Jan 2022' },
+        period: { pt: 'out 2020 - jan 2022', en: 'Oct 2020 - Jan 2022' },
         bullets: {
           pt: [
             'Desenvolvi um **orquestrador multitenant** para sincronização de PDVs e dados entre lojas do varejo.',
@@ -81,7 +81,7 @@ export const experience: Job[] = [
       },
       {
         title: { pt: 'Estágio em Desenvolvimento de Software', en: 'Software Development Intern' },
-        period: { pt: 'mar 2020 - jan 2021', en: 'Mar 2020 - Jan 2021' },
+        period: { pt: 'mar 2020 - out 2020', en: 'Mar 2020 - Oct 2020' },
         bullets: {
           pt: [
             'Documentação técnica, **testes automatizados** e colaboração cross-functional ao longo do ciclo de desenvolvimento.',

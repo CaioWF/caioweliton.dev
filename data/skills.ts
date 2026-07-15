@@ -20,7 +20,7 @@ export const skills: SkillCategory[] = [
   {
     label: { pt: 'Dados', en: 'Data' },
     icon: '◆',
-    items: [same('MariaDB'), same('PostgreSQL'), same('Prisma'), same('Redis')],
+    items: [same('MySQL / MariaDB'), same('PostgreSQL'), same('MongoDB'), same('Prisma'), same('Redis')],
   },
   {
     label: { pt: 'Pagamentos', en: 'Payments' },
