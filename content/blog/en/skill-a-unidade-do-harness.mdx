@@ -1,0 +1,76 @@
+---
+title: 'The part, not the prompt: the skill as the unit of a harness'
+date: '2026-07-25'
+description: 'If what matters is the harness and not the AI, what is the harness made of? The answer that became natural to me: skills. Small, named parts the agent discovers by relevance. Why this is the right unit, and what changes when you stop writing one giant prompt and start assembling parts.'
+tags: ['AI', 'Agents', 'Engineering']
+---
+
+# The part, not the prompt: the skill as the unit of a harness
+
+A while back I wrote that [it's not the AI, it's the harness](/blog/nao-e-a-ia-e-o-harness): what separates an agent that delivers from one that makes a mess isn't the model, it's the surroundings. The rules, the gates, the context you build around it. I was happy with the thesis, but it had a hole I only admitted later. I said the harness matters. I never said what it's made of.
+
+The answer, for me, kept converging on a single word: skills. And it's not that I invented anything. The skill is a primitive that already comes from the platform. What changed was that I stopped treating it as just one more way to organize a prompt and started treating it as the unit of composition. The smallest part of behavior I assemble, test, and slot into place. This post is about why that's the right unit.
+
+## What a skill actually is
+
+Peel off the wrapper and a skill is three things: a name, a `description`, and a body of instructions. The body is what you'd expect: the steps, the rules, the way to do that one task. But the body isn't the interesting part. The interesting part is the `description`.
+
+Because the agent doesn't call the skill by name. It doesn't have a list of functions it decides to invoke by signature. What it has is a shelf of `description`s, and for every task it asks: is any of these parts about what I'm doing right now? The `description` is the trigger. It's what decides whether the skill wakes up or stays asleep.
+
+That flips the way we usually think about code upside down. A function you call because you know it exists and you know its name. A skill fires because what you're doing resembles what it describes. It's routing by relevance, not by call. Closer to a librarian handing you the right book from your question than to an index you flip through already knowing the page.
+
+And that changes what "writing it well" means. In a function, the body is everything. In a skill, a bad `description` is fatal even with a perfect body: the part never fires, the knowledge is there and never used. I've watched this happen to me more than once. A good skill that just failed to say when it applies.
+
+## Why "unit," and not a function or a giant prompt
+
+I call the skill a unit because it has the three properties that make a part a part, and not some arbitrary chunk of text.
+
+**Discovery.** The skill only enters context when it's relevant. The other thirty stay on the shelf, costing almost nothing. It's the opposite of the two-thousand-line system prompt, where everything you might need is always loaded, competing for attention and for token budget on every turn, including the 90% of turns where it has nothing to do with anything. The skill is instruction loaded on demand. Context is a budget, and the `description` is what decides when to spend it.
+
+**Isolation.** A skill does one thing. It has a body, a goal, a boundary. It's the same reason we break systems into small functions: a part with one responsibility you can understand, swap, and, in theory, test on its own, without dragging the rest along. A mega-prompt that does everything is the equivalent of the two-hundred-line function nobody wants to touch.
+
+**Composition.** And here's the payoff. If the parts are small, named, and isolated, they slot together. You don't write "the agent's behavior" as a monolithic block. You assemble the behavior out of parts, the same way you assemble a program out of functions. And, like in code, the interesting thing isn't each part. It's how they combine.
+
+I found two ways of combining that earn the post.
+
+## Vertical composition: the chain
+
+The first is chaining. You take skills and put them one after another, each one picking up the work where the previous one left off.
+
+The example I use most is my own spec-driven development flow. It isn't a "build the feature" command. It's a chain of skills, each phase being its own part: understand the problem, write the PRD, write the spec, clear up the open questions, plan, break into tasks, analyze, implement, review. One after another.
+
+<HarnessDiagram locale="en" />
+
+What makes the chain work isn't the list of phases. It's what separates one part from the next: a gate. Each door between two skills denies passage by default and opens only when the previous stage has genuinely closed. You don't skip to planning without an approved spec, not because you agreed with yourself to be disciplined, but because the door won't open. The discipline is mechanical, enforced by code outside the model, not a good intention that depends on my remembering.
+
+The gain from treating each phase as a separate part, and not as a paragraph in one giant prompt, is the usual one: you can swap one without touching the others. Don't like how planning is coming out? Rewrite that skill. The other six never find out. Compare that to editing the "planning" section in the middle of a two-thousand-line document, hoping you don't knock the rest out of alignment.
+
+## Horizontal composition: the packs
+
+The second way to combine is grouping. Not every skill belongs in every project. API contract review matters in a service that exposes an API. There's no reason for it to be loaded in a command-line script. Multi-tenant security rules matter in a SaaS. In a personal project, they're just noise.
+
+So instead of one giant bag of skills, I group by affinity into packs you turn on by opt-in. A set for API review. One for SaaS security. One for stack conventions. You light up what the context calls for and leave the rest dark. The core, the development chain from above, doesn't change from one project to the next. What changes is which packs you plug in around it.
+
+If the chain is vertical composition (parts in sequence over time), the pack is horizontal composition (parts that coexist at the same moment). And both start from the same fact: because the unit is small and named, you can arrange it in more than one way. A big part doesn't compose. A small part does.
+
+## What you gain by getting the unit right
+
+It's worth saying why this beats the natural instinct, which is to dump everything into one enormous system prompt and keep patching.
+
+Context is a budget, and the `description` is the control for when to spend it. Naming is the start of versioning: a part with a name has a history, a before and after, something you can talk about. Isolation is what opens the door to testing: a part with one responsibility you can exercise on its own; a paragraph lost in the middle of a block, you can't. And discovery by relevance is what keeps cost flat as you add knowledge. Skill number forty doesn't make the other thirty-nine more expensive, because only the one relevant to the moment enters.
+
+The giant prompt fails on the exact opposite of each of those points: it spends budget all the time, has no boundary to version, has no part to test, and gets more expensive with every line you add.
+
+## Where it still grinds
+
+True to the pattern, the limits. A bad `description` is still the most annoying failure mode: an excellent skill that poorly describes when it applies simply never wakes up. And the worst part is that it doesn't error. It just stays quiet while you do by hand what it would have done for you. It becomes an invisible bug.
+
+There's duplication between packs I haven't faced yet: two packs that share a convention end up repeating a chunk instead of referencing one common part. Real isolated skill testing is still more aspiration than practice. I test the flow's output, not each part in a vacuum. And versioning is a convention, not a guarantee: nothing stops me from changing a skill's body and silently breaking whatever depended on the old behavior.
+
+None of it makes me want to go back to the monolithic prompt. It's the friction of having real parts, and that's a better friction than having no boundary at all.
+
+## What stays
+
+Getting the unit right changes the question you ask. It stops being "how do I write the prompt so the agent does this" and becomes "what part is missing, and where does it slot in." The first pushes you toward an ever-larger document. The second pushes you toward a catalog of small things you combine.
+
+The thesis of the previous post was that the harness matters more than the model. This is the next step: the harness isn't one block. It's a pile of small, named parts, slotted vertically by gates and horizontally by packs. The skill is the unit. And, like every good primitive, its value isn't in any one part alone. It's in how they compose.

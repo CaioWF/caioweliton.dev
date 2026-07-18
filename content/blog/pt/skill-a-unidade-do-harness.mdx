@@ -1,0 +1,76 @@
+---
+title: 'A peça, não o prompt: a skill como unidade do harness'
+date: '2026-07-25'
+description: 'Se o que importa é o harness e não a IA, do que o harness é feito? A resposta que virou natural pra mim: skills. Peças pequenas, nomeadas, que o agente descobre por relevância. Por que essa é a unidade certa, e o que muda quando você para de escrever um prompt gigante e começa a montar peças.'
+tags: ['IA', 'Agentes', 'Engenharia']
+---
+
+# A peça, não o prompt: a skill como unidade do harness
+
+Um tempo atrás escrevi que [não é a IA, é o harness](/blog/nao-e-a-ia-e-o-harness): o que separa um agente que entrega de um que faz bagunça não é o modelo, é o entorno. As regras, os gates, o contexto que você monta em volta dele. Fiquei satisfeito com a tese, mas ela tinha um buraco que eu só fui admitir depois. Eu disse que o harness importa. Não disse do que ele é feito.
+
+A resposta, pra mim, foi convergindo pra uma palavra só: skills. E não é que eu tenha inventado alguma coisa. A skill é um primitivo que já vem da plataforma. O que mudou foi eu parar de tratar ela como só mais um jeito de organizar prompt e começar a tratar como a unidade de composição. A peça mínima de comportamento que eu monto, testo e encaixo. Esse post é sobre por que essa é a unidade certa.
+
+## O que é uma skill, de verdade
+
+Descasca a embalagem e uma skill é três coisas: um nome, uma `description`, e um corpo de instruções. O corpo é o que você imagina: o passo a passo, as regras, o jeito de fazer aquela tarefa. Mas o corpo não é a parte interessante. A parte interessante é a `description`.
+
+Porque o agente não chama a skill pelo nome. Ele não tem uma lista de funções que decide invocar pela assinatura. O que ele tem é uma prateleira de `description`s, e a cada tarefa ele pergunta: alguma dessas peças é sobre o que eu tô fazendo agora? A `description` é o gatilho. É ela que decide se a skill acorda ou dorme.
+
+Isso vira o jeito que a gente pensa código de cabeça pra baixo. Uma função você chama porque sabe que ela existe e sabe o nome dela. Uma skill dispara porque o que você tá fazendo se parece com o que ela descreve. É roteamento por relevância, não por chamada. Mais perto de um bibliotecário que te entrega o livro certo pela sua pergunta do que de um índice que você folheia já sabendo a página.
+
+E isso muda o que "escrever bem" significa. Numa função, o corpo é tudo. Numa skill, uma `description` ruim é fatal mesmo com o corpo perfeito: a peça nunca dispara, o conhecimento tá lá e nunca é usado. Já vi isso acontecer comigo mais de uma vez. Skill boa, que só faltava dizer quando ela entra em cena.
+
+## Por que "unidade", e não função ou prompt gigante
+
+Chamo a skill de unidade porque ela tem as três propriedades que fazem uma peça ser peça, e não um pedaço qualquer de texto.
+
+**Descoberta.** A skill só entra no contexto quando é relevante. As outras trinta ficam na prateleira, custando quase nada. É o oposto do system prompt de duas mil linhas, onde tudo que você pode precisar tá sempre carregado, competindo por atenção e por orçamento de token a cada turno, inclusive nos 90% dos turnos em que não tem nada a ver. A skill é instrução carregada sob demanda. Contexto é orçamento, e a `description` é o que decide quando gastar.
+
+**Isolamento.** Uma skill faz uma coisa. Tem um corpo, um objetivo, uma fronteira. É o mesmo motivo pelo qual a gente quebra sistema em funções pequenas: uma peça com uma responsabilidade você consegue entender, trocar e, em tese, testar sozinha, sem arrastar o resto junto. Um mega-prompt que faz tudo é o equivalente à função de duzentas linhas que ninguém quer tocar.
+
+**Composição.** E aqui tá o pulo do gato. Se as peças são pequenas, nomeadas e isoladas, elas encaixam. Você não escreve "o comportamento do agente" como um bloco monolítico. Você monta o comportamento a partir de peças, do mesmo jeito que monta um programa a partir de funções. E, como em código, o interessante não é cada peça. É como elas se combinam.
+
+Achei dois jeitos de combinar que valem o post.
+
+## Composição vertical: a cadeia
+
+O primeiro é encadear. Você pega skills e põe uma atrás da outra, cada uma pegando o trabalho de onde a anterior parou.
+
+O exemplo que eu mais uso é o meu próprio fluxo de desenvolvimento orientado a spec. Ele não é um comando "faça a feature". É uma cadeia de skills, cada fase sendo a sua peça: entender o problema, escrever o PRD, escrever a spec, esclarecer as dúvidas, planejar, quebrar em tarefas, analisar, implementar, revisar. Uma depois da outra.
+
+<HarnessDiagram locale="pt" />
+
+O que faz a cadeia funcionar não é a lista de fases. É o que separa uma peça da seguinte: um gate. Cada porta entre duas skills nega passagem por padrão e só abre quando a etapa anterior fechou de verdade. Você não pula pro plano sem spec aprovada, não porque combinou consigo mesmo, mas porque a porta não abre. A disciplina é mecânica, aplicada por código fora do modelo, não uma boa intenção que depende de eu lembrar.
+
+O ganho de tratar cada fase como peça separada, e não como parágrafo de um prompt gigante, é o de sempre: dá pra trocar uma sem tocar nas outras. Não gostou de como o planejamento tá saindo? Reescreve aquela skill. As outras seis nem ficam sabendo. Compara com editar a seção "planejamento" no meio de um documento de duas mil linhas, torcendo pra não desalinhar o resto.
+
+## Composição horizontal: os packs
+
+O segundo jeito de combinar é agrupar. Nem toda skill pertence a todo projeto. Revisão de contrato de API importa num serviço que expõe API. Não tem por que estar carregada num script de linha de comando. Regra de segurança de multi-tenant importa num SaaS. Num projeto pessoal, é só ruído.
+
+Então em vez de um pacotão único de skills, eu junto por afinidade em packs que você liga por opt-in. Um conjunto de revisão de API. Um de segurança de SaaS. Um de convenções de stack. Você acende o que o contexto pede e deixa o resto apagado. O núcleo, a cadeia de desenvolvimento lá de cima, não muda de um projeto pro outro. O que muda é quais packs você pluga em volta dele.
+
+Se a cadeia é composição vertical (peças em sequência no tempo), o pack é composição horizontal (peças que coexistem no mesmo momento). E as duas partem do mesmo fato: porque a unidade é pequena e nomeada, dá pra arranjar de mais de um jeito. Peça grande não compõe. Peça pequena, sim.
+
+## O que se ganha ao acertar a unidade
+
+Vale dizer por que isso bate o instinto natural, que é jogar tudo num prompt de sistema enorme e ir remendando.
+
+Contexto é orçamento, e a `description` é o controle de quando gastar. Nomear é um começo de versionar: uma peça com nome tem história, tem antes e depois, dá pra falar dela. Isolar é o que abre a porta pra testar: peça com uma responsabilidade você exercita sozinha; parágrafo perdido no meio de um bloco, não. E descobrir por relevância é o que mantém o custo plano conforme você adiciona conhecimento. A skill número quarenta não deixa as outras trinta e nove mais caras, porque só a relevante do momento entra.
+
+O prompt gigante falha justo no contrário de cada um desses pontos: gasta orçamento o tempo todo, não tem fronteira pra versionar, não tem peça pra testar, e fica mais caro a cada linha que você acrescenta.
+
+## Onde isso ainda range
+
+Fiel ao padrão, os limites. `description` ruim continua sendo o modo de falha mais chato: uma skill excelente que descreve mal quando entra em cena simplesmente nunca acorda. E o pior é que não dá erro. Ela só fica quieta enquanto você resolve na mão o que ela resolveria. Vira um bug invisível.
+
+Tem duplicação entre packs que eu ainda não encarei: dois packs que compartilham uma convenção acabam repetindo pedaço em vez de referenciar uma peça comum. Teste de skill isolada, de verdade, ainda é mais aspiração que prática. Eu testo o resultado do fluxo, não cada peça no vácuo. E versionamento é convenção, não garantia: nada me impede de mudar o corpo de uma skill e quebrar sem querer quem dependia do comportamento antigo.
+
+Nada disso me faz querer voltar pro prompt monolítico. É o atrito de ter peça de verdade, e é um atrito melhor do que o de não ter fronteira nenhuma.
+
+## O que fica
+
+Acertar a unidade muda a pergunta que você faz. Deixa de ser "como escrevo o prompt pro agente fazer isso" e passa a ser "que peça falta, e onde ela encaixa". A primeira te empurra pra um documento cada vez maior. A segunda te empurra pra um catálogo de coisas pequenas que você combina.
+
+A tese do post anterior era que o harness importa mais que o modelo. Esse é o passo seguinte: o harness não é um bloco. É um monte de peça pequena e nomeada, encaixada na vertical por gates e na horizontal por packs. A skill é a unidade. E, como todo bom primitivo, o valor dela não tá em cada uma isolada. Tá em como elas se compõem.

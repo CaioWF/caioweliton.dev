@@ -24,7 +24,11 @@ export async function getAllPosts(locale: Locale): Promise<PostMeta[]> {
       return parsePostMeta(raw, slug)
     }),
   )
-  return [...metas, ...externalPosts[locale]].sort((a, b) => (a.date < b.date ? 1 : -1))
+  // posts com data futura ficam agendados: só aparecem quando a data chega
+  const today = new Date().toISOString().slice(0, 10)
+  return [...metas, ...externalPosts[locale]]
+    .filter((p) => p.date <= today)
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
 }
 
 export async function getPostSource(locale: Locale, slug: string): Promise<string | null> {
