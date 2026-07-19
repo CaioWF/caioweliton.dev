@@ -109,6 +109,19 @@ pre code { display: grid; }
 }
 .okf-pulse { animation: okf-pulse 4s ease-in-out infinite; }
 
+/* Diagrama loop — o feixe percorre o anel fechado (6s = período do ciclo) */
+@keyframes loop-flow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -100; }
+}
+.loop-flow { animation: loop-flow 6s linear infinite; }
+/* cada caixa acende quando o feixe passa nela (delay = fase do feixe no ciclo de 6s) */
+@keyframes box-lit {
+  0%, 14%, 100% { opacity: 0; }
+  3%, 11% { opacity: 1; }
+}
+.box-lit { opacity: 0; animation: box-lit 6s linear infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .harness-float, .harness-flow, .harness-gate, .okf-pulse { animation: none; }
+  .harness-float, .harness-flow, .harness-gate, .okf-pulse, .loop-flow, .box-lit { animation: none; }
 }

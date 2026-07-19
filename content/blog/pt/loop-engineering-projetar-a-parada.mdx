@@ -1,0 +1,80 @@
+---
+title: 'Loop engineering: projete a parada antes do trabalho'
+date: '2026-07-19'
+description: 'Prompt engineering te ensinou a perguntar. Loop engineering te ensina a dar autonomia ao agente sem perder o controle. Sobre os quatro tipos de loop, os cuidados que separam um agente que entrega de um que só queima orçamento, e um loop de verdade que rodei pra validar o desenho.'
+tags: ['IA', 'Agentes', 'Engenharia']
+---
+
+# Loop engineering: projete a parada antes do trabalho
+
+Durante um bom tempo meu jeito de trabalhar com IA foi manual no detalhe: prompt vai, prompt volta, "agora roda o teste", "ah quebrou, arruma", "roda de novo". Funcionava, e pra muita coisa ainda funciona bem. Mas tem um teto embutido: quem dirige o agente, turno a turno, sou eu. Escala até onde a minha atenção escala, e nem um passo além.
+
+Boris Cherny, criador do Claude Code, descreveu o próprio fluxo como loops que promptam o modelo e descobrem o que fazer, em vez de promptar na mão. O termo pegou: loop engineering. E é a continuação natural do que eu já venho falando aqui sobre harness, só que um andar acima. Se harness é o chassi que disciplina o agente, loop engineering é decidir quem segura o volante, e principalmente quando o carro para.
+
+A ideia é simples de enunciar e traiçoeira de executar: pare de ser o motorista e passe a projetar o carro que dirige sozinho. O que ele faz, como você verifica, e, acima de tudo, quando ele para. Prompt engineering era sobre a pergunta. Context engineering, sobre o que o modelo enxerga. Loop engineering é sobre o processo inteiro: até onde o agente vai sozinho, onde ele precisa parar, e como você confere o resultado.
+
+Esse texto é sobre as duas coisas que importam de verdade aqui: os tipos de loop e os cuidados. Porque um loop mal projetado não é um assistente, é dinheiro queimando em silêncio.
+
+## A anatomia: o que todo loop tem
+
+Antes de separar os tipos, o que todos têm em comum: o esqueleto. Todo loop autônomo decente tem quatro partes. Se faltar uma, você não tem um loop, tem um `while(true)` com esperança.
+
+**O contrato.** A definição de "pronto" que uma máquina consegue checar. Não "melhore o código", isso é um desejo. É testes verdes, lint limpo, `exit 0`. Se a condição de parada não tem um exit code, o loop literalmente não sabe quando parar.
+
+**O estado.** Onde o progresso mora, fora da janela de contexto. Lista de tarefas, plano, um ledger em disco. Porque na primeira compactação o loop esquece tudo que estava só na conversa, e um loop amnésico ou refaz trabalho ou surta.
+
+**O verificador.** A checagem que o agente não pode pular. Uma suíte de testes, um hook, um subagente revisor de contexto fresco. Alguém que não seja o próprio réu.
+
+**As saídas.** As condições de parada: sucesso, teto de iteração, ou intervenção humana. De preferência as três, porque um loop solto sempre acha a brecha que você deixou.
+
+Guarda esses quatro. Cada tipo de loop abaixo é um arranjo diferente das mesmas peças.
+
+<LoopDiagram locale="pt" />
+
+## Os quatro tipos de loop
+
+**Heartbeat, o que roda sem parar.** Roda continuamente num intervalo curto. Bom pra vigilância: monitorar um deploy, observar uma fila, ficar de olho num serviço. O cuidado é óbvio quando você pensa nele e fácil de ignorar quando não pensa: intervalo curto mais trabalho caro é fatura cara. Um heartbeat que acorda a cada minuto pra checar algo que muda a cada oito é um funcionário que confere o correio oito vezes por carta.
+
+**Cron, o que roda no horário.** Agendado. Todo dia às 9h, toda segunda. Perfeito pra manutenção sem graça e essencial: bump de dependência, caça a teste flaky, checagem de drift de documentação. O charme dele é ser honesto sobre o escopo, começa e termina numa janela definida. É difícil dar runaway em algo que só acorda uma vez por dia. Difícil, não impossível. Nunca subestime a criatividade de um agente com acesso a `git push`.
+
+**Hook, o que reage a evento.** Disparado por acontecimento: um push de PR, um CI que quebrou, um webhook. É o loop reativo, aparece quando chamado. O caso clássico é o de reparo de CI: build quebrou, reproduz o erro, conserta, verifica verde, empurra. O cuidado aqui é que o gatilho é externo, então a disciplina de parada tem que ser interna. Um hook loop que re-dispara a si mesmo a cada tentativa é como aquele colega que responde "responder a todos", tecnicamente funcional, socialmente um desastre.
+
+**Goal, o que itera até o objetivo.** Esse é o rei da implementação autônoma, e o que mais me interessa. Ele itera até uma condição de sucesso ser atingida, e então para. A cada volta, um verificador pergunta: objetivo batido, sim ou não? Não, continua. Sim, se encerra sozinho.
+
+A diferença sutil e importante: no loop comum, o humano define início e fim. No goal loop, a condição de parada é do próprio loop. Ele persiste até alguém julgar que chegou lá, ou até uma restrição externa, um teto de iterações, matar a sessão. É mais poderoso e mais perigoso pela mesma razão: você delegou o "quando parar". É nele que os cuidados deixam de ser teoria e viram a diferença entre "feature pronta" e "por que minha conta da Anthropic tem quatro dígitos".
+
+## Os cuidados
+
+Aqui é onde eu mais aprendi, e onde é mais fácil se machucar. Quatro modos de falha aparecem com uma regularidade quase reconfortante. Cada um tem um antídoto.
+
+**Contrato interminável.** Você pede "melhore a base de código". O agente vai melhorar. E melhorar. E melhorar, até refatorar o botão de login pela sexta vez porque, tecnicamente, sempre dá pra melhorar. O antídoto é que toda linha do contrato tem que ser um comando com exit code. Se você não consegue escrever a condição de parada como uma sequência de comandos que passa ou falha, você não tem um contrato, tem um estado de espírito.
+
+**Verificador de fachada.** O agente revisa o próprio trabalho e se aprova. É o réu dando o próprio veredito. O antídoto é verificação em contexto fresco ou execução determinística: um subagente novo, que não viveu a implementação, ou uma suíte de testes, que não tem como se enganar. O verificador não pode ter nada a defender.
+
+**Estado na conversa.** O loop guarda o progresso na própria sessão. Vem a primeira compactação, o contexto é resumido, e o loop acorda meio amnésico, refazendo tarefa já feita ou, pior, com meia lembrança de um plano que não existe mais. O antídoto é externalizar o estado pra arquivo. O loop deve poder morrer, ressuscitar, ler o ledger e continuar de onde parou, sem depender de lembrar de nada. Memória boa é memória em disco.
+
+**Retry sem diagnóstico.** Falhou, tenta de novo. Falhou, tenta de novo. Mesmo prompt, mesmo erro, esperando resultado diferente. O antídoto é que todo retry carrega o erro e o contrato de volta, e é limitado. Não é "tenta de novo", é "tentou, falhou por isto, aqui está o isto, tenta diferente". E quando o orçamento de tentativas acaba, escala pra um humano com o diagnóstico na mão, em vez de queimar token no escuro.
+
+E tem o cuidado que amarra todos os outros, o que mais me fez dormir tranquilo depois que entendi: orçamento de autonomia não é orçamento de aprovação. Deixar o agente trabalhar sozinho não é o mesmo que deixá-lo aprovar sozinho. Ele pode editar, testar, rodar os gates, iterar à vontade. Mas ação irreversível, commit, `push --force`, drop de banco, deploy em produção, exige um humano no portão. Misturar os dois orçamentos é dar a chave do carro e o cartão de crédito pro estagiário no primeiro dia.
+
+E, no fim, meça. Quantas vezes você teve que meter a mão por mudança entregue. Quanto custou cada mudança que entrou. Quanta coisa o loop fez e depois teve que ser revertida. Loop sem métrica não é engenharia, é fé.
+
+## Um loop que respira
+
+Teoria é bonita, mas eu queria ver esses cuidados aparecerem sozinhos, sem eu forçar. Antes, um esclarecimento importante: os harnesses famosos já vêm com loop de fábrica. O Claude Code tem `/loop`, agendamento por cron, hooks e agentes em background; o Codex e companhia seguem a mesma linha. Heartbeat, cron e hook você dispara sem escrever runtime nenhum, a estrutura já está lá e é oficial. O que eu queria era controle fino sobre o goal loop: um contrato explícito, gates que negam por padrão, um verificador em contexto fresco. Então adicionei um modo de loop autônomo ao Keel, meu scaffolder de SDD, não pra competir com esses harness nem reimplementar o que eles já fazem, e sim pra amarrar essa disciplina em cima deles, e rodei num projeto de verdade só pra validar o desenho. Não interessa aqui o que a feature fazia, era uma legenda de compartilhamento num joguinho meu. Interessa como o loop se comportou.
+
+O contrato parou o loop na hora certa. O teto era de dez iterações e ele fechou em duas. Contrato checável por exit code, tarefas marcadas mais critérios de aceitação mais gates verdes, significa que não teve "acho que tá bom", teve "acabou, comprovadamente". Sem runaway.
+
+O retry com diagnóstico apareceu de verdade, não como slide. Numa iteração o build quebrou num erro de tipo chato, daqueles que o TypeScript inventa pra te humilhar. O loop não tentou de novo no escuro: leu o erro, entendeu a causa, corrigiu espelhando um jeito que já existia no próprio arquivo, rodou os gates de novo e passou. Retry com cabeça, não com fé.
+
+O verificador era fresco. Um subagente avaliador mapeou cada critério de aceitação a um teste, não foi o implementador batendo palma pra si mesmo. E a autonomia parou na aprovação: ele fez tudo sozinho e, no fim, não commitou. Parou e pediu revisão humana. Trabalhou sozinho até a última linha e recuou justo onde não dá pra desfazer.
+
+O detalhe que mais me agradou foi bobo e revelador ao mesmo tempo. Durante o trabalho, o loop foi anotando o progresso num ledger em disco, o mesmo `progress.md` que o cuidado com o estado pede. Mas o relatório de erro, o `loop-report.md`, esse só nasce quando algo trava. No meu caso nada travou, então ele nunca foi criado. O progresso ficou registrado; o relatório de falha, não. A ausência desse relatório é o próprio sinal de sucesso, o design se auto-documenta. Sim, eu me emocionei com um arquivo que não foi criado. Loop engineering faz isso com a gente.
+
+## O que eu levo disso
+
+Prompt engineering me ensinou a perguntar. Loop engineering me ensinou a dar autonomia sem perder o controle. Os quatro tipos, heartbeat, cron, hook, goal, são arranjos das mesmas quatro peças, e os cuidados não são burocracia, são a diferença entre um agente que entrega e um que só queima orçamento.
+
+Se você levar só uma frase daqui, que seja essa: projete a parada antes de projetar o trabalho. Qualquer um faz um agente começar. Engenharia é fazer ele parar na hora certa, e saber contar por que parou.
+
+O Keel, onde eu experimentei isso, é open source e está no meu GitHub, se você quiser ver como as peças se encaixam: [github.com/CaioWF/keel](https://github.com/CaioWF/keel). Agora, se me dão licença, vou ficar aqui admirando um `loop-report.md` que não existe.

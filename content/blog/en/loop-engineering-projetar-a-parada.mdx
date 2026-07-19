@@ -1,0 +1,80 @@
+---
+title: 'Loop engineering: design the stop before the work'
+date: '2026-07-19'
+description: 'Prompt engineering taught you to ask. Loop engineering teaches you to grant the agent autonomy without losing control. On the four kinds of loop, the safeguards that separate an agent that ships from one that just runs up a bill, and a real loop I ran to validate the design.'
+tags: ['IA', 'Agentes', 'Engenharia']
+---
+
+# Loop engineering: design the stop before the work
+
+For a good while my way of working with AI was manual in the details: prompt out, prompt back, "now run the tests", "oh it broke, fix it", "run it again". It worked, and for plenty of things it still works fine. But there's a ceiling baked in: the one driving the agent, turn by turn, is me. It scales as far as my attention scales, and not one step further.
+
+Boris Cherny, the creator of Claude Code, described his own workflow as loops that prompt the model and figure out what to do, instead of prompting by hand. The term stuck: loop engineering. And it's the natural sequel to what I've been writing here about harness, just one floor up. If the harness is the chassis that disciplines the agent, loop engineering is deciding who holds the wheel, and above all when the car stops.
+
+The idea is easy to state and treacherous to execute: stop being the driver and start designing the car that drives itself. What it does, how you verify, and, above all, when it stops. Prompt engineering was about the question. Context engineering, about what the model sees. Loop engineering is about the whole process: how far the agent goes on its own, where it has to stop, and how you check the result.
+
+This piece is about the two things that actually matter here: the kinds of loop and the safeguards. Because a badly designed loop isn't an assistant, it's money burning in silence.
+
+## The anatomy: what every loop has
+
+Before splitting them into types, what they all share: the skeleton. Every decent autonomous loop has four parts. Miss one and you don't have a loop, you have a `while(true)` with hope attached.
+
+**The contract.** The definition of "done" a machine can check. Not "improve the code", that's a wish. It's green tests, clean lint, `exit 0`. If the stop condition has no exit code, the loop literally cannot know when to stop.
+
+**The state.** Where progress lives, outside the context window. Task list, plan, a ledger on disk. Because at the first compaction the loop forgets everything that lived only in the conversation, and an amnesiac loop either redoes work or loses it.
+
+**The checker.** The verification the agent can't skip. A test suite, a hook, a fresh-context reviewer subagent. Someone who isn't the defendant.
+
+**The exits.** The stop conditions: success, an iteration cap, or human intervention. Preferably all three, because a loose loop always finds the gap you left.
+
+Hold on to those four. Every loop type below is a different arrangement of the same pieces.
+
+<LoopDiagram locale="en" />
+
+## The four kinds of loop
+
+**Heartbeat, the one that never stops.** Runs continuously on a short interval. Good for watching: monitoring a deploy, tailing a queue, keeping an eye on a service. The safeguard is obvious once you think of it and easy to ignore when you don't: short interval plus expensive work equals expensive bill. A heartbeat that wakes every minute to check something that changes every eight is an employee who checks the mailbox eight times per letter.
+
+**Cron, the one that runs on schedule.** Scheduled. Every day at 9am, every Monday. Perfect for the dull, essential maintenance: dependency bumps, flaky-test hunting, doc-drift checks. Its charm is being honest about scope, it starts and ends inside a defined window. Hard to run away in something that wakes once a day. Hard, not impossible. Never underestimate the creativity of an agent with access to `git push`.
+
+**Hook, the one that reacts to events.** Triggered by something happening: a PR push, a broken CI, a webhook. It's the reactive loop, it shows up when called. The classic case is CI repair: build broke, reproduce the error, fix it, verify green, push. The safeguard here is that the trigger is external, so the stopping discipline has to be internal. A hook loop that re-triggers itself on every attempt is like that colleague who hits "reply all", technically functional, socially a disaster.
+
+**Goal, the one that iterates until the objective.** This is the king of autonomous implementation, and the one I care about most. It iterates until a success condition is met, and then it stops. On each pass, a checker asks: goal met, yes or no? No, keep going. Yes, shut itself down.
+
+The subtle, important difference: in an ordinary loop, the human defines start and end. In a goal loop, the stop condition belongs to the loop itself. It persists until someone judges it got there, or until an external constraint, an iteration cap, kills the session. It's more powerful and more dangerous for the same reason: you delegated the "when to stop". That's where the safeguards stop being theory and become the difference between "feature done" and "why does my Anthropic bill have four digits".
+
+## The safeguards
+
+This is where I learned the most, and where it's easiest to get hurt. Four failure modes show up with an almost reassuring regularity. Each has an antidote.
+
+**The endless contract.** You ask it to "improve the codebase". The agent will improve it. And improve it. And improve it, refactoring the login button for the sixth time because, technically, there's always room. The antidote is that every line of the contract has to be a command with an exit code. If you can't write the stop condition as a chain of commands that pass or fail, you don't have a contract, you have a mood.
+
+**The fake checker.** The agent reviews its own work and approves itself. It's the defendant delivering the verdict on its own trial. The antidote is verification in fresh context or deterministic execution: a fresh subagent that didn't live through the implementation, or a test suite, which can't fool itself. The checker has to have nothing to defend.
+
+**State in the conversation.** The loop keeps progress in its own session. The first compaction comes, the context gets summarized, and the loop wakes up half amnesiac, redoing a task it already did or, worse, with half a memory of a plan that no longer exists. The antidote is to externalize state to a file. The loop should be able to die, come back, read the ledger, and continue from where it stopped, without relying on remembering anything. Good memory is memory on disk.
+
+**Retry without diagnosis.** Failed, try again. Failed, try again. Same prompt, same error, expecting a different result. The antidote is that every retry carries the error and the contract back with it, and it's bounded. It's not "try again", it's "you tried, you failed because of this, here's the this, try differently". And when the retry budget runs out, it escalates to a human with the diagnosis in hand, instead of burning tokens in the dark.
+
+And there's the safeguard that ties all the others together, the one that most let me sleep once I understood it: an autonomy budget is not an approval budget. Letting the agent work on its own is not the same as letting it approve on its own. It can edit, test, run the gates, iterate all it wants. But an irreversible action, commit, `push --force`, dropping a database, a production deploy, requires a human at the gate. Mixing the two budgets is handing the intern the car keys and the credit card on day one.
+
+And in the end, measure. How many times you had to step in per shipped change. How much each change that landed cost. How much the loop did and then had to be reverted. A loop without metrics isn't engineering, it's faith.
+
+## A loop that breathes
+
+Theory is nice, but I wanted to watch these safeguards show up on their own, without me forcing them. First, an important clarification: the famous harnesses already ship loops out of the box. Claude Code has `/loop`, cron scheduling, hooks, and background agents; Codex and the rest follow the same line. Heartbeat, cron, and hook you fire without writing any runtime, the structure is already there and it's official. What I wanted was fine-grained control over the goal loop: an explicit contract, gates that deny by default, a checker in fresh context. So I added an autonomous loop mode to Keel, my SDD scaffolder, not to compete with those harnesses or reimplement what they already do, but to tie that discipline on top of them, and ran it on a real project just to validate the design. What the feature did doesn't matter here, it was a share caption in a little game of mine. How the loop behaved does.
+
+The contract stopped the loop at the right point. The cap was ten iterations and it closed in two. A contract checkable by exit code, ticked tasks plus acceptance criteria plus green gates, means there was no "I think it's fine", there was "done, provably". No runaway.
+
+The retry-with-diagnosis showed up for real, not as a slide. On one iteration the build broke on an annoying type error, the kind TypeScript invents to humiliate you. The loop didn't retry in the dark: it read the error, understood the cause, fixed it mirroring a pattern that already existed in the file itself, re-ran the gates and passed. Retry with a head on its shoulders, not with faith.
+
+The checker was fresh. An evaluator subagent mapped each acceptance criterion to a test, it wasn't the implementer clapping for itself. And the autonomy stopped at approval: it did everything on its own and, at the end, didn't commit. It stopped and asked for a human review. It worked on its own down to the last line and pulled back right where there's no undo.
+
+The detail that pleased me most was silly and revealing at once. Along the way, the loop kept jotting progress into a ledger on disk, the same `progress.md` the state safeguard calls for. But the error report, the `loop-report.md`, that one is only born when something jams. In my case nothing jammed, so it was never created. The progress got recorded; the failure report didn't. The absence of that report is itself the sign of success, the design documents itself. Yes, I got emotional about a file that wasn't created. Loop engineering does that to you.
+
+## What I take from this
+
+Prompt engineering taught me to ask. Loop engineering taught me to grant autonomy without losing control. The four types, heartbeat, cron, hook, goal, are arrangements of the same four pieces, and the safeguards aren't bureaucracy, they're the difference between an agent that ships and one that just runs up a bill.
+
+If you take a single line from here, let it be this: design the stop before you design the work. Anyone can make an agent start. Engineering is making it stop at the right moment, and knowing how to tell you why it stopped.
+
+Keel, where I tried this out, is open source and lives on my GitHub, if you want to see how the pieces fit together: [github.com/CaioWF/keel](https://github.com/CaioWF/keel). Now, if you'll excuse me, I'll be here admiring a `loop-report.md` that doesn't exist.
