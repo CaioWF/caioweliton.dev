@@ -1,0 +1,114 @@
+---
+title: 'Toda regra tem dois custos (você só mede um)'
+date: '2026-07-26'
+description: 'Todo guardrail cobra dois preços: o problema que ele evita e o atrito que ele impõe em quem obedece. O segundo quase nunca é medido, e é ele que decide se a regra vai ser seguida ou contornada. Três instrumentos pra medir, e por que a saída de emergência precisa ser uma porta.'
+tags: ['Engenharia', 'IA', 'Agentes']
+---
+
+# Toda regra tem dois custos (você só mede um)
+
+Semana passada escrevi um scanner de prosa. É uma checagem automática que lê o que eu escrevo e aponta os vícios típicos de texto gerado por IA: a tríade rítmica em todo parágrafo, o "não é apenas X, mas também Y", a pergunta retórica que o próprio autor responde na frase seguinte, o parágrafo que anuncia a própria importância antes de dizer qualquer coisa.
+
+E deixei de fora exatamente a regra que todo mundo teria escrito primeiro: o travessão.
+
+O travessão é o tell mais comentado da internet. Em 2024 ele funcionava, os modelos abusavam e dava pra pegar texto de IA quase só por isso. Só que virou meme, os modelos passaram a suprimir, e hoje presença ou ausência de travessão não prova nada. O sinal morreu e a fama ficou. Enquanto isso o travessão continua sendo pontuação legítima que gente de verdade usa. Colocar ele na lista teria produzido a maior parte dos falsos positivos do scanner e enterrado os sinais estruturais, que são bem mais confiáveis, no meio do ruído.
+
+Ou seja: a regra mais óbvia da lista era a única capaz de quebrar a ferramenta inteira. E isso não é sobre travessão.
+
+## Quem paga o guardrail
+
+Toda regra que você adiciona a um processo cobra dois preços.
+
+O primeiro é o que ela evita. Esse é fácil de defender, porque você o imagina antes de escrever a regra. É o `rm -rf` no diretório errado, o `push --force` na main, o segredo commitado, o texto ruim publicado. Você consegue narrar o desastre em voz alta numa reunião e todo mundo balança a cabeça.
+
+O segundo é o que ela impõe. É o atrito cobrado de toda pessoa que segue a regra, toda vez, pra sempre. Esse ninguém mede, por três motivos que se reforçam: ele chega em parcelas pequenas demais pra virar reclamação, é pago justamente por quem obedece, que por definição é quem menos reclama, e quem não obedece contorna e nunca paga.
+
+Pensa na catraca da portaria de um prédio. Ela existe por causa do invasor, mas o invasor pula a catraca em dois segundos. Quem passa o crachá duas vezes por dia, dez mil vezes ao longo dos anos, é o morador. A catraca pode até valer a pena, e provavelmente vale. Mas se ninguém nunca somou as dez mil passadas de crachá, a conta que justificou a catraca está incompleta.
+
+O custo de um guardrail é pago pelo disciplinado, não pelo infrator. O infrator descobre o `--no-verify` na segunda semana.
+
+Passei os últimos dias mexendo em três regras diferentes do meu scaffolder de projeto, e cada uma me ensinou uma forma diferente de medir esse segundo custo. Elas são exemplos. O método serve pra qualquer lint, qualquer check de CI, qualquer template de PR e qualquer fluxo de aprovação que você já escreveu.
+
+## Instrumento 1: rode a regra contra o seu trabalho bom
+
+Quando você escreve uma regra, você escreve junto o exemplo ruim que a justifica. É natural e é uma armadilha, porque você acabou de criar um teste que a regra passa por construção.
+
+O teste que importa é o contrário: rode a regra contra o trabalho que você tem orgulho de ter feito. O código que você considera bem escrito. O texto que você publicou e gostou. O PR que resolveu o problema direito.
+
+Se a regra acusa, a regra está errada. Não o trabalho.
+
+No caso do scanner, isso virou um teste automatizado com uma asserção só: as próprias skills, notas de design e templates do projeto, que são texto que eu escrevi na mão e considero bom, precisam disparar zero avisos. Se um dia eu adicionar uma regra que acusa o meu próprio corpus, o teste quebra antes de eu publicar a regra. É a diferença entre achar que a regra é precisa e ter uma prova diária de que ela é.
+
+Você já viu essa falha em outros lugares sem chamar por esse nome. A regra de lint que proíbe um idioma legítimo da linguagem e enche o código de comentário de exceção. A política de segurança que bloqueia o caminho normal de trabalho e faz todo mundo aprender o caminho anormal. O template de commit que não cabe num revert. O sintoma é sempre o mesmo: gente boa fazendo trabalho bom sendo interrompida.
+
+## Instrumento 2: meça o piso, não o teto
+
+Todo processo é desenhado pensando na mudança grande. A migração de banco, o refactor que atravessa dez arquivos, a feature que mexe em cobrança. Faz sentido, é ali que o estrago mora.
+
+Ninguém mede o piso: quanto custa a menor mudança legítima possível.
+
+Eu medi. Peguei um typo de uma palavra numa string e passei pelo meu próprio fluxo de spec-driven development, do começo ao fim, contando o que era exigido. Deu seis artefatos e duas aprovações. Uma palavra. Se eu cobrasse por artefato, aquele typo teria sido o item mais caro do backlog.
+
+O que me incomodou é que o fluxo não estava quebrado. Ele funcionou exatamente como projetado. E exatamente como projetado ele tornou inviável corrigir um typo, o que produz o pior resultado possível: o typo fica. A regra que existe pra aumentar a qualidade acabou de preservar um erro, porque o caminho certo custava mais do que o erro incomodava.
+
+Meça o piso do seu processo. Cronometre uma correção de uma linha do primeiro comando até o merge. Conte os campos que o template de PR exige de quem mudou a cor de um botão. Conte quantas pessoas precisam aprovar um ajuste de texto. O número costuma ser constrangedor, e ele é o custo que sua equipe paga na maioria dos dias, porque a maioria das mudanças é pequena.
+
+<FloorCostDiagram locale="pt" />
+
+## Instrumento 3: meça o alcance, não o susto
+
+O terceiro caso era o oposto dos outros dois: comandos destrutivos de verdade, do tipo que um agente autônomo pode disparar às três da manhã enquanto eu durmo.
+
+A tentação aqui é classificar por susto. "Isso parece perigoso, bloqueia." Susto é métrica ruim porque escala com o quão dramático o comando parece, não com o quão longe o dano vai.
+
+A pergunta melhor tem duas partes: até onde isso alcança, e isso volta? Um `rm -rf` num diretório de build alcança pouco e volta com um rebuild. O mesmo comando na raiz do projeto alcança tudo e volta com sorte. São o mesmo comando e merecem tratamentos diferentes, o que significa que a regra precisa olhar o argumento, não o verbo.
+
+E tem um detalhe de implementação que vale por metade do desenho: liste o que é permitido, não o que é proibido.
+
+Volto pra portaria. Uma lista de proibidos é o porteiro com um álbum de fotos de ladrões conhecidos: funciona até aparecer um ladrão que não está no álbum, e nesse dia ele entra sorrindo. Uma lista de permitidos é o porteiro com a lista de moradores: quem não está nela não entra, inclusive quem ninguém nunca viu. A primeira precisa prever o futuro. A segunda não.
+
+Isso vale pro guardrail do agente, pro seu check de autorização e pra qualquer coisa que decida entre "pode" e "não pode".
+
+## O que acontece quando você não mede
+
+O custo não medido não desaparece. Ele vira bypass.
+
+`--no-verify`. `[skip ci]`. O canal de alerta que a equipe inteira silenciou. A aprovação que virou carimbo, onde a pessoa clica em "approve" antes de abrir o diff. O `# noqa` que alguém colou no topo do arquivo em 2023 e que hoje ninguém tem coragem de tirar.
+
+Uma regra contornada de rotina é pior que regra nenhuma, e o motivo não é moral, é informacional. Sem a regra, você sabe que não tem proteção. Com a regra contornada, você acha que tem. E como o bypass é invisível, você perde a capacidade de distinguir quem pulou por um bom motivo de quem pulou por pressa. Vira tudo o mesmo silêncio.
+
+O resumo que eu escrevi pra mim mesmo enquanto desenhava o scanner foi esse: guarda que grita lobo demais acaba desligada, e guarda desligada não protege nada.
+
+Quando você vê a equipe contornando um guardrail, a leitura preguiçosa é indisciplina. A leitura útil é que o segundo custo ficou maior que o benefício, e alguém mediu por você, na marra.
+
+## A saída precisa ser uma porta, não uma fresta
+
+Se a regra tem exceção legítima, e quase toda regra tem, construa a exceção como artefato de primeira classe.
+
+No caso do typo, a correção não foi afrouxar o fluxo. Foi criar um caminho declarado pra mudança trivial: você declara explicitamente que a mudança é trivial, com um teto de tamanho, e essa declaração expira sozinha depois de um tempo. O bypass deixa rastro e morre de morte natural.
+
+Compare com `--no-verify`. Os dois pulam a checagem. A diferença está em três propriedades que o `--no-verify` não tem: alguém declarou a intenção, existe um limite explícito do que cabe ali dentro, e a permissão não sobrevive ao dia. Uma exceção com dono e prazo é uma decisão registrada. Uma exceção sem nenhum dos dois é uma fresta, e fresta cresce.
+
+O mesmo raciocínio se aplica àquela regra de lint que sua equipe desligou inteira porque incomodava em três arquivos.
+
+## Warn é subestimado
+
+O último ponto é o mais barato de aplicar e o que eu mais demorei a entender.
+
+Regra nova quase sempre deveria nascer avisando, não bloqueando.
+
+Bloquear no primeiro dia parece rigor, mas destrói a sua chance de medir o segundo custo. Se a regra bloqueia, você só ouve as pessoas irritadas o suficiente pra reclamar. É a mesma distorção de avaliar um restaurante lendo só o livro de reclamações: você fica sabendo do prato frio e nunca dos duzentos que saíram no ponto. Os casos legítimos que a regra quebrou em silêncio não chegam até você, porque quem tinha pressa contornou e seguiu a vida.
+
+Uma regra em modo aviso te dá o dado que falta: quantas vezes ela disparou, em cima de quê, e quantas dessas vezes você concordou. Depois de algumas semanas você sabe se ela merece bloquear ou merece ser deletada, e essa é uma pergunta que só o uso responde.
+
+Bloqueio fica reservado pro irreversível. Ali o custo do falso positivo é uma interrupção chata, e o custo do falso negativo é um banco de produção.
+
+## O que eu levo disso
+
+No texto anterior eu disse que a gente devia projetar a parada antes de projetar o trabalho. Esse aqui é o irmão mais chato da mesma ideia: meça o custo antes de escrever a regra.
+
+Escrever regra é fácil, e escrever regra defensável é mais fácil ainda, porque você controla o exemplo que a justifica. O trabalho de verdade é medir o que ela cobra de quem obedece: rode contra o seu trabalho bom, cronometre a menor mudança possível, olhe o alcance em vez do susto, e deixe a saída de emergência ser uma porta com placa.
+
+O scaffolder onde eu testei tudo isso é open source e está no meu GitHub, se quiser ver os três casos no código: [github.com/CaioWF/keel](https://github.com/CaioWF/keel).
+
+E esse texto não tem um travessão sequer. Nenhuma regra me obrigou, eu só não gosto deles. Que é, no fim das contas, o único motivo que nunca precisou de gate.

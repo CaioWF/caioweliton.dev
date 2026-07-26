@@ -1,0 +1,114 @@
+---
+title: 'Every rule has two costs (you only measure one)'
+date: '2026-07-26'
+description: 'Every guardrail charges two prices: the problem it prevents and the friction it imposes on whoever complies. The second one almost never gets measured, and it is the one that decides whether a rule gets followed or routed around. Three instruments for measuring it, and why the emergency exit has to be a door.'
+tags: ['Engenharia', 'IA', 'Agentes']
+---
+
+# Every rule has two costs (you only measure one)
+
+Last week I wrote a prose scanner. It's an automated check that reads what I write and flags the usual tells of AI-generated text: the rhythmic tricolon in every paragraph, the "not just X, but Y", the rhetorical question the author answers in the next sentence, the paragraph that announces its own importance before saying anything.
+
+And I left out exactly the rule everyone would have written first: the em-dash.
+
+The em-dash is the most talked-about tell on the internet. In 2024 it worked, the models overused it, and you could spot machine text on that alone. Then it became a meme, the models started suppressing it, and today the presence or absence of an em-dash proves nothing. The signal died and the reputation stayed. Meanwhile the em-dash is still legitimate punctuation that real people use. Putting it on the list would have produced most of the scanner's false positives and buried the structural tells, which are far more reliable, in the noise.
+
+So the most obvious rule on the list was the only one capable of breaking the whole tool. And this isn't about em-dashes.
+
+## Who pays for the guardrail
+
+Every rule you add to a process charges two prices.
+
+The first is what it prevents. That one is easy to defend, because you imagine it before you write the rule. It's the `rm -rf` in the wrong directory, the `push --force` on main, the committed secret, the bad text published. You can narrate the disaster out loud in a meeting and everyone nods.
+
+The second is what it imposes. It's the friction charged to every person who follows the rule, every time, forever. Nobody measures that one, for three reasons that reinforce each other: it arrives in installments too small to become a complaint, it's paid by the people who comply, who by definition complain least, and the people who don't comply route around it and never pay at all.
+
+Think of the turnstile in a building lobby. It exists because of the intruder, but the intruder hops it in two seconds. The one badging in twice a day, ten thousand times over the years, is the resident. The turnstile may well be worth it, and it probably is. But if nobody ever added up the ten thousand badge swipes, the math that justified the turnstile is incomplete.
+
+The cost of a guardrail is paid by the disciplined, not by the offender. The offender finds `--no-verify` in week two.
+
+I spent the last few days reworking three different rules in my project scaffolder, and each one taught me a different way to measure that second cost. They're examples. The method applies to any lint rule, any CI check, any PR template, and any approval flow you have ever written.
+
+## Instrument 1: run the rule against your good work
+
+When you write a rule, you write the bad example that justifies it at the same time. That's natural and it's a trap, because you just built a test the rule passes by construction.
+
+The test that matters is the opposite: run the rule against work you're proud of. The code you consider well written. The text you published and liked. The PR that solved the problem properly.
+
+If the rule flags it, the rule is wrong. Not the work.
+
+In the scanner's case this turned into an automated test with a single assertion: the project's own skills, design notes, and templates, which are text I wrote by hand and consider good, have to trip zero warnings. The day I add a rule that flags my own corpus, the test breaks before the rule ships. That's the difference between believing the rule is precise and having a daily proof of it.
+
+You have seen this failure elsewhere without calling it by this name. The lint rule that bans a legitimate idiom of the language and fills the code with exception comments. The security policy that blocks the normal path of work and teaches everyone the abnormal one. The commit template that doesn't fit a revert. The symptom is always the same: good people doing good work getting interrupted.
+
+## Instrument 2: measure the floor, not the ceiling
+
+Every process is designed with the big change in mind. The database migration, the refactor that crosses ten files, the feature that touches billing. That makes sense, it's where the damage lives.
+
+Nobody measures the floor: what the smallest legitimate change costs.
+
+I measured it. I took a one-word typo in a string and ran it through my own spec-driven development flow, start to finish, counting what was required. Six artifacts and two approvals. One word. If I charged by artifact, that typo would have been the most expensive item in the backlog.
+
+What bothered me is that the flow wasn't broken. It worked exactly as designed. And exactly as designed it made fixing a typo unviable, which produces the worst outcome available: the typo stays. The rule that exists to raise quality had just preserved an error, because the right path cost more than the error bothered anyone.
+
+Measure the floor of your process. Time a one-line fix from the first command to the merge. Count the fields your PR template demands from someone who changed a button color. Count how many people have to approve a copy tweak. The number is usually embarrassing, and it's the cost your team pays on most days, because most changes are small.
+
+<FloorCostDiagram locale="en" />
+
+## Instrument 3: measure the blast radius, not the scare
+
+The third case was the opposite of the other two: genuinely destructive commands, the kind an autonomous agent can fire at three in the morning while I sleep.
+
+The temptation here is to classify by scare. "That looks dangerous, block it." Scare is a bad metric because it scales with how dramatic the command looks, not with how far the damage goes.
+
+The better question has two parts: how far does this reach, and does it come back? An `rm -rf` in a build directory reaches very little and comes back with a rebuild. The same command at the project root reaches everything and comes back if you're lucky. Same command, different treatment, which means the rule has to look at the argument, not at the verb.
+
+And there's an implementation detail worth half the design: list what's allowed, not what's forbidden.
+
+Back to the lobby. A forbidden list is the doorman holding a photo album of known burglars: it works until a burglar shows up who isn't in the album, and that day he walks in smiling. An allowed list is the doorman holding the resident roster: whoever isn't on it doesn't get in, including the people nobody has ever seen. The first one has to predict the future. The second one doesn't.
+
+That holds for the agent guardrail, for your authorization check, and for anything that decides between "allowed" and "not allowed".
+
+## What happens when you don't measure
+
+The unmeasured cost doesn't disappear. It turns into bypass.
+
+`--no-verify`. `[skip ci]`. The alert channel the whole team muted. The approval that became a rubber stamp, where the person clicks "approve" before opening the diff. The `# noqa` someone pasted at the top of a file in 2023 that nobody has the nerve to remove.
+
+A routinely bypassed rule is worse than no rule, and the reason isn't moral, it's informational. Without the rule, you know you have no protection. With the bypassed rule, you think you do. And since the bypass is invisible, you lose the ability to tell who skipped for a good reason from who skipped out of hurry. It all becomes the same silence.
+
+The summary I wrote for myself while designing the scanner was this: a guard that cries wolf gets turned off, and a guard that's off protects nothing.
+
+When you see the team routing around a guardrail, the lazy reading is indiscipline. The useful reading is that the second cost outgrew the benefit, and somebody measured it for you, the hard way.
+
+## The way out has to be a door, not a crack
+
+If the rule has a legitimate exception, and almost every rule does, build the exception as a first-class artifact.
+
+In the typo case, the fix wasn't loosening the flow. It was creating a declared path for trivial change: you explicitly declare that the change is trivial, with a size ceiling, and that declaration expires on its own after a while. The bypass leaves a trace and dies of natural causes.
+
+Compare that to `--no-verify`. Both skip the check. The difference is three properties `--no-verify` doesn't have: somebody declared the intent, there's an explicit limit on what fits inside, and the permission doesn't survive the day. An exception with an owner and an expiry is a recorded decision. An exception with neither is a crack, and cracks grow.
+
+The same reasoning applies to that lint rule your team disabled entirely because it was annoying in three files.
+
+## Warn is underrated
+
+The last point is the cheapest to apply and the one that took me longest to understand.
+
+A new rule should almost always start out warning, not blocking.
+
+Blocking on day one looks like rigor, but it destroys your chance of measuring the second cost. If the rule blocks, you only hear from the people annoyed enough to complain. It's the same distortion as judging a restaurant by its one-star reviews: you learn about the cold plate and never about the two hundred that came out right. The legitimate cases the rule broke in silence never reach you, because whoever was in a hurry routed around it and moved on.
+
+A rule in warn mode gives you the data you're missing: how many times it fired, on what, and how often you agreed with it. After a few weeks you know whether it deserves to block or deserves to be deleted, and that's a question only usage answers.
+
+Blocking stays reserved for the irreversible. There the cost of a false positive is an annoying interruption, and the cost of a false negative is a production database.
+
+## What I take from this
+
+In the previous piece I said we should design the stop before we design the work. This one is the duller sibling of the same idea: measure the cost before you write the rule.
+
+Writing a rule is easy, and writing a defensible rule is easier still, because you control the example that justifies it. The real work is measuring what it charges the people who comply: run it against your good work, time the smallest possible change, look at the reach instead of the scare, and let the emergency exit be a door with a sign on it.
+
+The scaffolder where I tried all of this is open source and lives on my GitHub, if you want to see the three cases in code: [github.com/CaioWF/keel](https://github.com/CaioWF/keel).
+
+And this piece doesn't have a single em-dash. No rule forced me, I just don't like them. Which is, in the end, the only reason that never needed a gate.
