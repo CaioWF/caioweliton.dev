@@ -1,0 +1,92 @@
+---
+title: "What you can't turn into a hook"
+date: '2026-08-01'
+description: 'Automation handles decisions that have a right answer. Anything that needs judgment needs a different mechanism, and most broken processes picked their hook by when it fires instead of by what it can actually do.'
+tags: ['Engenharia', 'IA', 'Agentes']
+---
+
+# What you can't turn into a hook
+
+This week I went after an old annoyance in my project scaffolder: `CLAUDE.md` is written once at bootstrap and goes stale the same week.
+
+If you don't use that file, it's the text the agent reads in full, on every turn, before anything else. It's the project's starting context. And everything a session finds out about the repo had nowhere to go: the command that actually brings the stack up, the suite that only passes after a seed, the trap that cost an hour. STATE is volatile by design, ADRs are for decisions that are hard to reverse, specs belong to a single feature. The operating knowledge fell through the gap between the three, and every cold session rediscovered it from scratch.
+
+The obvious design here is a hook. A `SessionEnd` that reads the transcript at the end, distills what the session learned, and writes it to the file. Automatic, nobody has to remember anything.
+
+Except it can't work, and the problem isn't implementation.
+
+A hook is a deterministic script. `SessionEnd` gets a transcript path and no ability to read meaning out of it. Deciding that "the seed has to run before the integration suite" is durable while "we tried three regexes and gave up" is noise takes judgment. It isn't pattern matching.
+
+And this isn't about `CLAUDE.md`. It's about mixing up "I want this to happen every time" with "this can be a script".
+
+## Pick the mechanism by the lever, not by the moment
+
+When we decide to automate something, the first question that shows up is *when should this run*. End of session. Before the commit. After the tool executed. It's the wrong question, or at least not the first one.
+
+The first one is: what does this hook have in hand, and what can it do with it.
+
+That was the same finding I'd already hit with the project's text scanner, the check that reads what I write and flags the usual tells of AI writing. It runs on `PostToolUse` and blocks nothing, because by the time it fires the tool has already run. The event name says "after use" and that is precisely what it delivers. You can warn, you can't prevent.
+
+Think about a smoke detector. It's a sensor with one signal: it knows there is smoke, it fires the same way every time, and it holds no opinion about anything. That is exactly what you want in a house. What it can't tell you is whether the dish came out well. Tasting the food is a different job, and no sensor does it. `SessionEnd` knows the session ended, which is the smoke. What it doesn't know is whether any of it was worth keeping.
+
+You have seen this mistake outside of agent land. The pre-commit hook that tries to decide whether the test really covers the case. The CI rule demanding that the commit message explain the why, which then receives "fixes" padded to fifty-one characters because the minimum was fifty. The linter that judges whether a variable name is good. In each one, somebody took a human criterion and dressed it up as a pattern, and what's left is a check that passes by construction and a team trained to satisfy it.
+
+## Automate the routing, not the judgment
+
+The good part is that once you split the judgment from the mechanics, there are real mechanics left to automate.
+
+The judgment here is a single test, and it's a plain question: will this still be true next week, on a different task, for someone who wasn't here? No regex answers that. The person who lived through the session does.
+
+Once the answer is yes, the rest is mechanical. The fact lands in one of three places, and the criterion isn't what it's about, it's **when it's needed**:
+
+- environment, tests, and conventions go into `CLAUDE.md`, because they're needed before the first edit of every session;
+- traps go into `docs/gotchas.md`, because you look those up when you hit them, not every turn;
+- a pointer to where a subject is documented doesn't become a link list, it becomes frontmatter on the target document, because the concept index already builds that map at session start.
+
+`CLAUDE.md` loads in full on every turn and `docs/` is fetched on demand. Dumping everything the session learned into the first one would trade a stale file for a bloated one, which is the same problem with a bigger bill. There's even a rough ceiling for it: a block growing past fifteen lines or so is the signal to move detail into `docs/` and leave a pointer behind.
+
+<JudgmentRouteDiagram locale="en" />
+
+The same cut works on any process with a subjective part. Bug triage: deciding severity is judgment, sending it to the team that owns that area is a fixed rule. PR review: assessing whether the approach is sound is judgment, checking that a test came with it is a script. Every time someone tries to automate the subjective piece, the result is a required field everyone fills with the same word.
+
+## Hang the ritual on a moment that already exists
+
+If this becomes a skill instead of a hook, someone has to invoke it. And that's where the next trap sits: inventing a new ritual.
+
+A new ritual competes with the work for attention. It loses. The retro nobody attends, the "review dependencies every Friday", the checklist living in a document nobody has opened since the week it was written.
+
+What I did instead was hang that skill on two moments the flow already crosses: `handoff` in pause mode, which is already asking what to keep and now separates volatile from durable instead of pushing both into the same file, and the last step of finishing a branch, which is skipped when the work gets thrown away. No new mechanism, nothing recurring, nothing to schedule.
+
+There was also something I deliberately didn't build: a `SessionEnd` hook as a mere reminder, nudging me to run the skill. A nudge that appears as the session ends is a note taped to the door after everyone left, and the version the next session would read shows up one session late.
+
+## Declare where the project gets to write
+
+With who writes and when settled, the ugly part remains: the file is generated by a tool that updates itself, and now it also holds local content that can't be lost.
+
+The fix was giving the local content an address. Marker blocks, shaped `<!-- BEGIN:keel:<id> -->` through `<!-- END:keel:<id> -->`, with an injector that does two things: `set`, which inserts or updates a block, and `carry-over`, which copies every block from an old file into a fresh one. When the scaffolder does a forced refresh, it snapshots first, rewrites the body, and carries the blocks back afterwards. The upgrade updates what belongs to it without erasing what the project knows.
+
+Part of the file still belongs to the generator, and that part follows the opposite rule: the blocks the scaffolder writes itself get rewritten from scratch on every update. There the new version beats the old one, which is what you want, because that content was never project knowledge, it's template output. What the project learned is preserved, what the tool generated is regenerated. Every block has an owner, and the owner decides who wins.
+
+<BlockUpgradeDiagram locale="en" />
+
+You'll recognize this instantly under another name. `# BEGIN ANSIBLE MANAGED BLOCK`. The `.gitignore` that came from a template and picked up four lines of yours at the bottom. The badge block in the README. The `# DO NOT EDIT BELOW THIS LINE` that, if it worked, wouldn't need to be in caps.
+
+The rule I take from it: if the generator doesn't declare where the human may write, it just chose for you between losing your customization and never updating again. In practice people choose the second, and the generator becomes dead code with a version number stuck in 2023.
+
+## Propose the diff, don't write the file
+
+Last piece, and the one I was most tempted to skip: the skill never writes directly. It shows the exact lines it intends to add, grouped by target file, says what it dropped and why, and waits.
+
+The reason is error asymmetry. This file governs every future session of the project. A wrong inference written there unattended isn't wrong once; it's wrong permanently and invisibly, and the agent will treat it as repo truth on every turn until somebody gets suspicious.
+
+In the previous piece I wrote that a new rule should almost always start out warning instead of blocking. Propose and wait is that same idea from the other side of the table: it's warn mode for writing. You keep the step automatic right up to the point where a mistake gets expensive, and there a human confirms.
+
+## What I keep
+
+The previous piece was about measuring what a rule costs before you write it. This one is the question that comes before that: does the rule even fit the mechanism you picked for it?
+
+Automation handles decisions with a right answer. When the decision needs judgment, the way out isn't a cleverer script, it's separating the two parts. Judgment for whoever has the context, mechanics for the script, and the ritual hung on a moment the flow already crosses so nobody has to remember it.
+
+The scaffolder is on my GitHub if you want to see the blocks and the injector from the inside: [github.com/CaioWF/keel](https://github.com/CaioWF/keel).
+
+Its core seeds exactly one block in a fresh project, called `## Environment`. Just the one, because it's the only category every project has and no project had anywhere to record. The others get created the day there's something true to put inside them, which is roughly the opposite of how I would have built this a year ago.

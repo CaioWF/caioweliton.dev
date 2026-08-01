@@ -1,0 +1,92 @@
+---
+title: 'O que não dá pra virar hook'
+date: '2026-08-01'
+description: 'Automação resolve decisão que tem gabarito. O que exige julgamento precisa de outro mecanismo, e boa parte dos processos quebrados escolheu o hook pelo momento em que ele dispara, não pelo que ele consegue fazer.'
+tags: ['Engenharia', 'IA', 'Agentes']
+---
+
+# O que não dá pra virar hook
+
+Essa semana fui resolver um incômodo antigo do meu scaffolder de projetos: o `CLAUDE.md` nasce no bootstrap e envelhece na mesma semana.
+
+Pra quem não usa esse arquivo, ele é o texto que o agente lê inteiro, em todo turno, antes de qualquer coisa. É o contexto de partida do projeto. E tudo que uma sessão descobre sobre o repositório não tinha onde morar: o comando que sobe a stack de verdade, a suíte que só passa depois do seed, a armadilha que custou uma hora. STATE é volátil por desenho, ADR é pra decisão difícil de reverter, spec pertence a uma feature só. O conhecimento operacional caía no vão entre os três, e toda sessão fria redescobria tudo do zero.
+
+O desenho óbvio pra isso é um hook. Um `SessionEnd` que lê o transcript no fim, filtra o que a sessão aprendeu e escreve no arquivo. Automático, ninguém precisa lembrar de nada.
+
+Só que ele não tem como funcionar, e o problema não é de implementação.
+
+Hook é script determinístico. O `SessionEnd` recebe um caminho de transcript e nenhuma capacidade de extrair sentido dali. Decidir que "o seed precisa rodar antes da suíte de integração" é durável, enquanto "a gente tentou três regex e desistiu" é ruído, isso é julgamento. Não é casamento de padrão.
+
+E isso não é sobre `CLAUDE.md`. É sobre a confusão entre "eu quero que isso aconteça sempre" e "isso pode ser um script".
+
+## Escolha o mecanismo pela alavanca, não pelo momento
+
+Quando a gente decide automatizar alguma coisa, a primeira pergunta que vem é *quando isso deveria rodar*. Fim de sessão. Antes do commit. Depois que a ferramenta executou. É a pergunta errada, ou pelo menos não é a primeira.
+
+A primeira é: o que esse hook tem em mãos, e o que ele consegue fazer com isso.
+
+Foi a mesma descoberta que eu já tinha feito no scanner de texto do projeto, a checagem que lê o que eu escrevo e marca os vícios típicos de escrita de IA. Ele roda em `PostToolUse` e não bloqueia nada, porque quando ele dispara a ferramenta já rodou. O nome do evento diz "depois do uso" e é exatamente isso que ele entrega. Dá pra avisar, não dá pra impedir.
+
+Pensa num detector de fumaça. Ele é um sensor com um sinal só: sabe que tem fumaça, dispara sempre igual, não tem opinião sobre nada. É exatamente o que você quer numa casa. Só que ele não sabe dizer se a comida ficou boa. Provar é outra função, e não existe sensor que faça isso. O `SessionEnd` sabe que a sessão acabou, que é a fumaça. O que ele não sabe é se o que aconteceu ali valia guardar.
+
+Você já viu esse erro fora do mundo de agente. O hook de pre-commit que tenta decidir se o teste cobre o caso de verdade. A regra de CI que exige que a mensagem de commit explique o porquê, e recebe "ajustes" em cinquenta e um caracteres porque o mínimo era cinquenta. O lint que julga se o nome da variável é bom. Em todos, alguém pegou um critério humano e vestiu de padrão, e o que sobra é uma checagem que passa por construção e uma equipe treinada pra satisfazê-la.
+
+## Automatize o roteamento, não o julgamento
+
+A parte boa é que, quando você separa o julgamento da mecânica, sobra mecânica de verdade pra automatizar.
+
+O julgamento aqui é um teste só, e ele é uma pergunta em português: isso ainda vai ser verdade semana que vem, numa tarefa diferente, pra alguém que não estava aqui? Não tem regex pra isso. Quem responde é quem viveu a sessão.
+
+Depois que a resposta é sim, o resto é decisão mecânica. O fato vai parar em três lugares possíveis, e o critério não é o assunto dele, é **quando ele é necessário**:
+
+- ambiente, testes e convenções vão pro `CLAUDE.md`, porque são necessários antes da primeira edição de toda sessão;
+- armadilha vai pro `docs/gotchas.md`, porque é consultada quando você esbarra nela, não a cada turno;
+- ponteiro pra onde um assunto está documentado não vira lista de links, vira frontmatter no próprio documento de destino, porque o índice de conceitos já monta esse mapa sozinho no começo da sessão.
+
+`CLAUDE.md` carrega inteiro em todo turno e `docs/` é buscado sob demanda. Jogar tudo que a sessão aprendeu no primeiro seria trocar um arquivo desatualizado por um arquivo inchado, que é o mesmo problema com uma fatura maior. Tem até um limite grosseiro pra isso: bloco que passa de umas quinze linhas é sinal de mover detalhe pro `docs/` e deixar um ponteiro no lugar.
+
+<JudgmentRouteDiagram locale="pt" />
+
+Esse recorte serve pra qualquer processo com uma parte subjetiva. Triagem de bug: decidir a severidade é julgamento, encaminhar pro time dono daquela área é regra fixa. Revisão de PR: avaliar se a abordagem é boa é julgamento, checar se veio com teste é script. Toda vez que alguém tenta automatizar o pedaço subjetivo, o resultado é um campo obrigatório que todo mundo preenche com a mesma palavra.
+
+## Pendure a rotina num momento que já existe
+
+Se isso vira uma skill em vez de um hook, alguém precisa invocar. E aí mora a armadilha seguinte, que é criar uma rotina nova.
+
+Rotina nova compete por atenção com o trabalho. Ela perde. A retro que ninguém vai, o "revisar dependências toda sexta", o checklist que mora num documento que ninguém abre desde a semana em que foi escrito.
+
+O que eu fiz foi pendurar essa skill em dois momentos que o fluxo já cruza: no `handoff` em modo pausa, que já está perguntando o que guardar e agora separa o volátil do durável em vez de empurrar os dois pro mesmo arquivo, e no fechamento de uma branch, no passo final, que é pulado quando o trabalho é descartado. Nenhum mecanismo novo, nada recorrente, nada pra agendar.
+
+E teve uma coisa que eu deliberadamente não fiz: um `SessionEnd` só de lembrete, avisando que valia rodar a skill. Aviso que aparece quando a sessão está acabando é bilhete deixado na porta de quem já foi embora, e a versão que a próxima sessão leria chegaria uma sessão atrasada.
+
+## Declare onde o projeto pode escrever
+
+Resolvido quem escreve e quando, sobra o problema mais chato: o arquivo é gerado por uma ferramenta que se atualiza sozinha, e agora ele também tem conteúdo local que não pode se perder.
+
+A saída foi dar endereço pro conteúdo local. Blocos marcados, no formato `<!-- BEGIN:keel:<id> -->` até `<!-- END:keel:<id> -->`, com um injetor de duas operações: `set`, que insere ou atualiza um bloco, e `carry-over`, que copia os blocos de um arquivo antigo pra um arquivo novo. Quando o scaffolder faz um refresh forçado, ele tira um snapshot antes, reescreve o corpo e traz os blocos de volta depois. O upgrade atualiza o que é dele sem apagar o que o projeto aprendeu.
+
+Uma parte do arquivo continua sendo do gerador, e essa parte segue a regra oposta: os blocos que o próprio scaffolder escreve são reescritos do zero a cada atualização. Ali o novo ganha do antigo, e é isso que você quer, porque aquilo nunca foi conhecimento do projeto, é saída de template. O que o projeto aprendeu se preserva, o que a ferramenta gerou se regenera. Cada bloco tem um dono, e o dono decide quem ganha.
+
+<BlockUpgradeDiagram locale="pt" />
+
+Isso você reconhece na hora, com outro nome. O `# BEGIN ANSIBLE MANAGED BLOCK`. O `.gitignore` que veio do template e recebeu quatro linhas suas no fim. O bloco de badges do README. O `# DO NOT EDIT BELOW THIS LINE` que, se funcionasse, não precisaria estar em caixa alta.
+
+A regra que eu tiro disso: se o gerador não declara onde o humano pode escrever, ele acabou de escolher por você entre perder a customização e nunca mais atualizar. Na prática as pessoas escolhem a segunda, e o gerador vira código morto com um número de versão preso em 2023.
+
+## Proponha o diff, não escreva o arquivo
+
+Última peça, e a que mais me tentou a pular: a skill nunca escreve direto. Ela mostra as linhas exatas que pretende adicionar, agrupadas por arquivo de destino, diz o que descartou e por quê, e espera.
+
+O motivo é assimetria de erro. O arquivo em questão governa toda sessão futura do projeto. Uma inferência errada escrita ali sem ninguém olhar não fica errada uma vez, ela fica errada pra sempre e invisível, e o agente vai tratar aquilo como verdade do repositório em todo turno até alguém desconfiar.
+
+No texto anterior eu escrevi que regra nova quase sempre deveria nascer avisando em vez de bloqueando. Propor e esperar é a mesma ideia do outro lado da mesa: é o modo aviso da escrita. Você mantém o passo automático até o ponto onde o erro fica caro, e ali um humano confirma.
+
+## O que fica
+
+O post anterior era sobre medir o custo de uma regra antes de escrevê-la. Esse aqui é a pergunta que vem antes: essa regra cabe no mecanismo que você escolheu pra ela?
+
+Automação resolve decisão que tem gabarito. Quando a decisão exige julgamento, a saída não é um script mais esperto, é separar as duas partes. Julgamento pra quem tem contexto, mecânica pro script, e a rotina pendurada num momento que o fluxo já cruza, pra ninguém precisar lembrar.
+
+O scaffolder está no meu GitHub, se quiser ver os blocos e o injetor por dentro: [github.com/CaioWF/keel](https://github.com/CaioWF/keel).
+
+O núcleo dele semeia exatamente um bloco em projeto novo, chamado `## Environment`. Um só, porque é a única categoria que todo projeto tem e que nenhum tinha onde anotar. Os outros nascem no dia em que existe algo verdadeiro pra colocar dentro, que é mais ou menos o contrário de como eu teria feito isso um ano atrás.
