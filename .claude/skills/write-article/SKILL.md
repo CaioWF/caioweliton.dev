@@ -13,7 +13,7 @@ Os dois idiomas são saída de primeira classe. O blog pareia posts por slug, en
 
 ## Pipeline
 
-`tema` → **ângulo/tese** → **verificação de fatos** → **esqueleto** → **rascunho PT** → **passe anti-slop** → **checklist** → **versão EN** → **passe anti-slop EN** → **checklist**.
+`tema` → **ângulo/tese** → **verificação de fatos** → **esqueleto** → **rascunho PT** → **avaliação de diagrama** → **passe anti-slop** → **checklist** → **versão EN** → **passe anti-slop EN** → **checklist**.
 
 Não pular a verificação de fatos. É onde essa skill mais falha (ver Guardrails).
 
@@ -62,7 +62,7 @@ Os movimentos que sustentam um post do blog:
 - **Primeira pessoa**, voz ativa, contrações naturais, verbo simples (`é`, `tem`, `faz`).
 - **Ritmo variado**: frase longa seguida de frase curta e seca.
 - **Código inline** com crase pra comando/flag/arquivo (`--no-verify`, `rm -rf`, `content/blog/pt`).
-- **Componentes MDX** existentes só se já existirem no repo. Não inventar componente.
+- **Componentes MDX**: os que já existem entram à vontade. Componente novo só como diagrama do post, seguindo a seção 6.
 - **Sem travessão** (`—`, `–`) em lugar nenhum, nos dois idiomas, inclusive frontmatter. Vírgula, dois-pontos ou frase nova. Varrer antes de fechar.
 
 ### 5. Orçamento de analogia e piada
@@ -83,7 +83,44 @@ Os dois são temperos com dose. Estourar a dose é o jeito mais rápido de o tex
 - **Nunca na abertura da tese** nem na frase-resumo do fecho: esses dois lugares precisam ser levados a sério.
 - Piada boa nasce de um detalhe real do caso ("se eu cobrasse por artefato, aquele typo teria sido o item mais caro do backlog"), não de um trocadilho.
 
-### 6. Passe anti-slop
+### 6. Diagrama (avaliar sempre, fazer só quando paga)
+
+Todo post passa por essa avaliação, com o rascunho PT já pronto. A maioria não precisa de figura. Quando precisa, é porque tem uma coisa que a prosa explica mal.
+
+**Vale diagrama quando** o post tem relação espacial (o que está dentro de quê, o que vem antes do quê), antes/depois, dois eixos que se cruzam, um ciclo, ou um trecho que o Caio leu e achou complexo. **Não vale quando** a figura só repetiria uma lista que o texto já dá, ou quando ela precisaria de número que o post não mediu. Figura não inventa dado: o mesmo guardrail da seção 2 vale pro desenho.
+
+**Antes de propor, ler os anteriores.** `components/blog/*-diagram.tsx` é o corpus, um por post denso:
+
+| Componente | Post | Forma |
+|---|---|---|
+| `harness-diagram.tsx` | não é a IA, é o harness | camadas em volta do modelo |
+| `okf-graph-diagram.tsx` | OKF | grafo de nós ligados, animado |
+| `loop-diagram.tsx` | loop engineering | ciclo com estados acendendo em sequência |
+| `floor-cost-diagram.tsx` | toda regra tem dois custos | duas linhas e a cunha entre elas |
+
+Reusar a linguagem visual (moldura com rótulo na borda, mono em caixa alta, traço fino, cor só como reforço), nunca o desenho.
+
+**Propor 2-3 caminhos e esperar a escolha do Caio.** Cada caminho com: o que a figura mostra, a forma, e qual parágrafo ela alivia. Não implementar antes da escolha.
+
+**Posição no texto.** A figura entra logo depois do parágrafo que ela resolve, nunca antes (aí ela vira enigma) nem no fim da seção (aí o leitor já se virou sem ela). Se o post tem um trecho que o Caio marcou como complexo, a posição default é ali.
+
+**Mais de uma figura é permitido**, e a regra é uma por conceito, não uma por seção. Duas figuras só se sustentam quando mostram relações diferentes (um antes/depois e um fluxo de decisão, por exemplo) e vivem em seções separadas. Duas que mostram a mesma relação com desenho diferente: fica a melhor. Duas na mesma seção: nunca, o leitor perde o fio. Na prática o teto é dois num post de 1500 palavras, porque figura demais transforma ensaio em slide.
+
+**Contrato técnico**, derivado dos quatro existentes:
+
+- arquivo `components/blog/<nome>-diagram.tsx`, export nomeado `<Nome>Diagram`;
+- registrar em `mdx-components.tsx`: import no topo e entrada no objeto `components`, senão a tag não resolve;
+- prop `{ locale?: Locale }` com default `'pt'`, e a cópia num objeto `copy` de chaves `pt`/`en`, fechado com `satisfies Record<Locale, ...>`;
+- SVG inline com `viewBox`, sem dependência externa, sem imagem binária, sem texto essencial fora do SVG;
+- cor por token do tema (`var(--accent)`, `var(--muted)`, `var(--border)`, `var(--foreground)`, `var(--faint)`, `var(--surface)`), nunca hex fixo, pra funcionar em light e dark;
+- raiz `<figure className="my-8 not-prose">`;
+- `role="img"` e `aria-label` com a descrição completa da figura, texto que mora no objeto de cópia junto com o resto;
+- legenda em texto sempre que a identidade de um traço depender de cor ou de estilo de linha;
+- animação, quando houver, por classe CSS com `animationDelay` inline (ver `loop-diagram.tsx`), nunca por JS;
+- comentário no topo do arquivo dizendo o que o esquema afirma e o que ele deliberadamente não afirma (ver `floor-cost-diagram.tsx`);
+- chamada no MDX: `<NomeDiagram locale="pt" />` no arquivo PT e `locale="en"` no par EN, na mesma posição relativa dos dois.
+
+### 7. Passe anti-slop
 
 Ler `anti-slop.md` e varrer o rascunho contra a tabela do idioma que está sendo escrito. Reescrever tudo que casar.
 
@@ -93,7 +130,7 @@ Os que mais aparecem em EN: `delve/leverage/unlock/foster`, `not just X, but Y`,
 
 **Preservar estrangeirismo técnico legítimo** (deploy, lint, commit, bypass, gate, hook, harness, churn, MVP). Traduzir esses à força é tell de IA, não o contrário.
 
-### 7. Versão EN
+### 8. Versão EN
 
 A versão EN é **reescrita, não tradução**. Traduzir frase a frase produz texto que soa vertido, que é o próprio tell.
 
@@ -136,6 +173,7 @@ Rodar por arquivo, PT e EN separadamente:
 5. Analogias ≤3, cada uma desenvolvida e mapeada. Piadas ≤3, nenhuma na abertura da tese nem na frase-resumo.
 6. Todo número e toda afirmação sobre o Caio tem origem citável.
 7. Frontmatter completo, `date` no formato certo, tags do vocabulário existente, slug igual nos dois idiomas.
+7b. Diagrama avaliado. Se entrou: registrado em `mdx-components.tsx`, cor por token do tema, `aria-label` preenchido, e a tag na mesma posição no PT e no EN.
 8. **Read-aloud**: ler o texto em voz alta (mental). Onde travar, o ritmo está artificial. Reescrever.
 9. Se o `keel` estiver disponível, rodar `core/claude/hooks/slop-guard.mjs` no arquivo. As regras dele são em inglês: vale como rede de verdade na versão EN, e quase nada na PT. O item 4 é o que sustenta o PT.
 
