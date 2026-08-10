@@ -10,7 +10,7 @@ export const skills: SkillCategory[] = [
   {
     label: { pt: 'Back-end', en: 'Back-end' },
     icon: '⚙',
-    items: [same('Node.js'), same('TypeScript'), same('NestJS'), same('REST APIs'), { pt: 'Microsserviços', en: 'Microservices' }, { pt: 'Event-driven', en: 'Event-driven' }, same('Jest')],
+    items: [same('Node.js'), same('TypeScript'), same('NestJS'), same('REST APIs'), same('Swagger / OpenAPI'), same('JWT'), { pt: 'Microsserviços', en: 'Microservices' }, { pt: 'Event-driven', en: 'Event-driven' }, same('Jest')],
   },
   {
     label: { pt: 'AWS', en: 'AWS' },
@@ -36,6 +36,11 @@ export const skills: SkillCategory[] = [
     label: { pt: 'DevOps', en: 'DevOps' },
     icon: '⎈',
     items: [same('Docker'), same('Kubernetes'), same('GitHub Actions'), same('Jenkins'), same('AWS CodePipeline'), same('Git')],
+  },
+  {
+    label: { pt: 'Observabilidade', en: 'Observability' },
+    icon: '◎',
+    items: [same('Datadog'), same('New Relic'), same('CloudWatch'), { pt: 'Logging estruturado', en: 'Structured logging' }, { pt: 'Monitoramento', en: 'Monitoring' }],
   },
   {
     label: { pt: 'Arquitetura & Liderança', en: 'Architecture & Leadership' },
