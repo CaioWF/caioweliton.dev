@@ -1,0 +1,88 @@
+---
+title: 'Prazo corta o que não tem data'
+date: '2026-08-10'
+description: 'Construí um produto contra uma data que não se move e entreguei tudo que tinha data marcada. O que ficou de fora foi justamente o instrumento que responderia por que ele não pegou, e essa escolha eu tomei sem perceber que estava escolhendo.'
+tags: ['Engenharia', 'Produto', 'Carreira']
+---
+
+# Prazo corta o que não tem data
+
+Dia 27 de maio eu subi o iBolão, um SaaS pra criar bolão da Copa sem planilha. A Copa começava em 11 de junho.
+
+O produto foi pro ar completo. Os dez critérios de pronto que eu tinha escrito antes de começar estavam todos lá: criar conta, criar bolão, convidar por link, palpitar, calcular ponto, ranking ao vivo, limite por plano, upgrade, pagamento por Pix e expansão do bolão depois do pagamento. Nada foi pro ar pela metade.
+
+O iBolão não pegou. E hoje, três semanas depois da final, eu não consigo dizer quantas pessoas clicaram no botão de convidar amigo pelo WhatsApp. Não é que o número foi baixo. É que o número não existe. Eu deixei a medição de fora em maio, e na hora ela pareceu a coisa mais barata de tirar da frente.
+
+E isso não é sobre Copa do Mundo. Todo projeto com data pública faz a mesma conta: quando o prazo não se move, o escopo passa a ser decidido pelo calendário, e a medição é a primeira coisa que ele descarta. Não porque alguém tenha decidido que ela não importa, mas porque ela é a única parte do trabalho cujo valor chega depois da data.
+
+## O calendário escreveu o escopo
+
+Todo prazo de software é negociável. Você escorrega o release uma semana, remarca a demo, empurra a virada de chave pro mês seguinte. Já a Copa começou dia 11 de junho, e ia começar dia 11 de junho independente do meu backlog.
+
+Isso aparece no `git log` de um jeito que eu não tinha percebido antes de ir olhar. Entre a API e o front, 202 commits em maio. Em junho, 30. Em julho, nenhum.
+
+Quase todo o trabalho aconteceu antes do primeiro apito, o que é o esperado. O que eu não esperava era o formato do que sobrou de fora.
+
+## Distribuição entrou, a medição dela não
+
+A leitura fácil de um side project que não decola é que faltou pensar em distribuição. No meu caso não faltou. Três dias depois de subir eu escrevi uma spec de três botões de compartilhamento por WhatsApp: convidar a galera pro bolão, mandar o ranking completo no grupo, e zoar os amigos com a própria posição. Os três subiram. O arquivo `src/lib/whatsapp.ts` está lá até hoje, com as mensagens prontas e os emojis de medalha.
+
+Na seção "fora de escopo" da mesma spec, escrita por mim, no mesmo dia, está a linha: tracking e analytics dos cliques nos botões de WhatsApp.
+
+O plano de analytics do produto já tinha caído pro V2 antes mesmo de eu subir. Fui conferir agora no repositório inteiro do front: nenhuma biblioteca de analytics, nenhum evento, nada. Zero.
+
+Então eu construí três canais de viralização e nenhum contador. O produto tinha boca e não tinha ouvido.
+
+## Por que a medição é sempre a primeira a cair
+
+Pense num carro de corrida onde você precisa tirar peso antes da largada. O velocímetro é candidato óbvio: ele não faz o carro andar. Tira o velocímetro e o carro anda exatamente igual, na mesma velocidade, no mesmo tempo de volta. A prova acontece do mesmo jeito.
+
+Você só não sabe a que velocidade estava indo. E quando a prova acaba, o dado não volta, porque não existe corrida gravada pra consultar depois.
+
+Instrumentação é assim em qualquer projeto com data. Toda feature de produto tem um usuário esperando do outro lado numa data conhecida, e por isso ela se defende sozinha na hora de priorizar. A medição não tem ninguém esperando por ela hoje. Ela é uma promessa de que daqui a algumas semanas alguém vai querer saber uma coisa. Colocada lado a lado com "o cara não consegue convidar o amigo", ela perde toda vez, e perde com um argumento que parece bom.
+
+Quando você vê um projeto entregue sem instrumentação, a leitura preguiçosa é que faltou tempo. A leitura útil é que faltou uma data pra ela. Feature tem data porque o usuário chega. Medição não tem, porque quem chega é você, meses depois, com uma pergunta que agora não tem resposta.
+
+Você já viu isso em lugares onde o produto era outro. A migração que subiu sem dashboard comparando o sistema velho e o novo, e virou discussão de opinião sobre se ficou mais rápido. O feature flag que entrou sem evento nenhum, e ninguém sabe dizer quantos usuários chegaram a cair no ramo novo. O alerta configurado no fim do projeto, quando já não dava pra saber qual era o valor normal da métrica. O sintoma é sempre o mesmo: o sistema está de pé e a conversa sobre ele é achismo.
+
+## Mata-mata não existe no banco em maio
+
+Os 30 commits de junho, os únicos feitos com o torneio rolando, são quase todos a mesma família de problema.
+
+Ordenação errada das fases do mata-mata. Os rótulos `Last 16` e `Last 32` não caindo dentro do `isKnockout`. O sync relabelando `LAST_*` pra português e fragmentando a fase em duas. Aviso de pênalti na interface. Pênalti entrando no placar gravado, quando devia contar só o tempo regulamentar mais a prorrogação.
+
+Nenhum desses bugs existia em maio, e não por descuido de teste. Eles não existiam porque o estado não existia. A API de dados que eu consumia não tinha jogo de mata-mata pra devolver enquanto o mundo não jogasse a fase de grupos. Não dava pra reproduzir um pênalti de oitavas no dia 20 de maio, pelo mesmo motivo que não dá pra fotografar uma coisa que ainda não aconteceu.
+
+Produto de evento tem uma classe de estado que só nasce durante o evento, e que acontece uma vez só. Você não testa antes e não tem segunda chance depois. É a mesma família da primeira Black Friday de um checkout novo, do primeiro fechamento fiscal de um ERP, da primeira execução de verdade de um plano de recuperação de desastre. O que dá pra fazer é fabricar o estado futuro na mão, com seed sintético, e aceitar que a sua fabricação vai estar parecida e não igual. É melhor que nada, e mesmo assim não é o real.
+
+## Dá pra ter pressa e ser reversível
+
+Tem um clichê que diz que prazo apertado explica dívida técnica. Minha experiência não sustenta isso, e o exemplo mais claro é justamente o que mais parecia justificar a gambiarra.
+
+A cinco dias do lançamento eu precisei trocar o gateway de pagamento inteiro. O motivo não foi técnico: o provedor antigo mostrava o meu nome pessoal e o meu handle na tela de checkout, sem opção de customizar. Quem ia pagar 29 reais no bolão via a minha conta pessoal na frente. Confiança de compra é feature, e aquilo estava quebrado.
+
+O caminho rápido era trocar a chamada, apontar pro provedor novo e seguir. O que eu fiz foi extrair uma interface de estratégia, implementar os dois provedores atrás dela, deixar os dois webhooks ligados ao mesmo tempo e escolher qual vale por variável de ambiente. Rollback vira mudar uma env e reiniciar, sem redeploy de código.
+
+Custou mais que a gambiarra e menos do que parece, porque a lógica antiga não foi reescrita, foi movida. E comprou a única coisa que importa em véspera de lançamento: se o provedor novo desse problema com jogo rolando, o conserto era de segundos e não dependia de eu estar na frente de um editor.
+
+Sob pressão, a pergunta que rende não é qual dos dois caminhos é mais rápido de escrever. É qual dos dois eu consigo desfazer sozinho, às onze da noite de um sábado.
+
+## V2 de produto sazonal é cancelamento
+
+No documento do projeto eu tenho uma lista chamada "features não implementadas (V2)". Analytics está lá. Cards compartilháveis, bot de WhatsApp, wrapped de fim de torneio, comentário por jogo, tudo lá.
+
+Em produto contínuo, V2 é adiamento. O usuário continua chegando na segunda-feira e o item volta pra mesa quando alguém tiver fôlego. Em produto sazonal, V2 é cancelamento com nome bonito. A próxima Copa é em 2030. Nada daquela lista tem pra onde voltar.
+
+Eu escrevi aquela lista achando que estava priorizando. Estava arquivando.
+
+A parte que incomoda não é ter cortado. Cortar era obrigatório, e eu cortaria de novo quase tudo daquela lista. É que eu cortei justamente o item que me diria quais dos outros cortes foram os errados. O que eu tenho hoje é uma intuição sobre onde o funil furou, e intuição não é dado, é o que a gente usa quando não tem dado.
+
+Passei julho inteiro monitorando o sistema. Ele não tinha nada pra me contar.
+
+## O que eu levo
+
+No texto anterior sobre regra eu disse que todo guardrail cobra dois preços e que a gente só mede um. Esse aqui é a versão sem guardrail nenhum: dá pra terminar um projeto tendo medido zero, sem nunca ter decidido isso em voz alta.
+
+A medição não precisa ser bonita nem completa. Um contador de clique no botão de convite e um evento de bolão criado seriam meia hora de trabalho em maio, e hoje seriam a diferença entre saber e achar.
+
+Instrumento entra junto com a primeira feature que ele mede. Depois do apito final não tem mais o que instrumentar.

@@ -1,0 +1,88 @@
+---
+title: 'Deadlines cut whatever has no date'
+date: '2026-08-10'
+description: 'I built a product against a date that would not move, and shipped everything that had a date attached. What got left out was the one thing that would explain why it never caught on, and I made that call without noticing I was making it.'
+tags: ['Engineering', 'Product', 'Career']
+---
+
+# Deadlines cut whatever has no date
+
+On May 27th I shipped iBolão, a small SaaS for running a World Cup prediction pool without a spreadsheet. The World Cup started on June 11th.
+
+It went out complete. The ten done criteria I had written before starting were all there: sign up, create a pool, invite by link, submit predictions, score them, live ranking, plan limits, upgrade, Pix payment, and pool expansion after payment. Nothing shipped half finished.
+
+iBolão never caught on. And today, three weeks after the final, I cannot tell you how many people clicked the button that invites a friend over WhatsApp. The number is not low. The number does not exist. I left the measurement out back in May, and at the time it felt like the cheapest thing to drop.
+
+This is not really about football. Any project with a public date runs the same math: when the deadline will not move, the calendar starts deciding the scope, and measurement is the first thing it throws out. Not because anyone decided it does not matter, but because it is the only part of the work whose payoff arrives after the date.
+
+## The calendar wrote the scope
+
+Every software deadline is negotiable. You slip the release by a week, move the demo, push the cutover to next month. The World Cup started on June 11th, and it was going to start on June 11th no matter what my backlog looked like.
+
+That shows up in the `git log` in a shape I had not noticed until I went to check. Across the API and the front end, 202 commits in May. In June, 30. In July, none.
+
+Almost all the work happened before the first whistle, which is what you would expect. What I did not expect was the shape of what got left out.
+
+## Sharing shipped, measuring it did not
+
+The easy read on a side project that goes nowhere is that nobody thought about distribution. That is not what happened here. Three days after going live I wrote a spec for three WhatsApp share buttons: invite people to the pool, drop the full ranking into the group chat, and trash-talk your friends with your own position. All three shipped. The file `src/lib/whatsapp.ts` is still there, with the message templates and the medal emojis.
+
+In the "out of scope" section of that same spec, written by me, on the same day, sits a line: tracking and analytics on the WhatsApp button clicks.
+
+The analytics plan for the product had already been pushed to V2 before I even shipped. I went and checked the whole front-end repo just now: no analytics library, no events, nothing. Zero.
+
+So I built three viral channels and not one counter. The product had a mouth and no ears.
+
+## Why measurement is always first to go
+
+Picture a race car where you have to shed weight before the start. The speedometer is an obvious candidate, because it does not make the car go. Take it out and the car runs exactly the same, at the same speed, over the same lap time. The race happens either way.
+
+You just do not know how fast you were going. And once the race ends the number does not come back, because there is no recording to consult afterwards.
+
+Instrumentation behaves like that in any project with a date. Every product feature has a user waiting on the other side on a known day, so it defends itself during prioritization. Measurement has nobody waiting for it today. It is a promise that in a few weeks somebody will want to know something. Put it next to "people cannot invite their friends" and it loses every time, and it loses to an argument that sounds good.
+
+When you see a project shipped without instrumentation, the lazy read is that time ran out. The useful read is that it never had a date of its own. Features get one because the user shows up. Measurement does not, because the person who shows up is you, months later, with a question that no longer has an answer.
+
+You have seen this where the product was something else entirely. The migration that went live with no dashboard comparing old system to new, so whether it got faster became a matter of opinion. The feature flag that shipped with no events, so nobody can say how many users ever landed in the new branch. The alert configured at the end of the project, once it was too late to know what normal looked like. The symptom is always the same: the system is up and every conversation about it is guesswork.
+
+## The knockout stage does not exist in the database in May
+
+The 30 commits from June, the only ones written while the tournament was running, are almost all the same family of problem.
+
+Knockout rounds sorting in the wrong order. The `Last 16` and `Last 32` labels falling outside `isKnockout`. The sync relabeling `LAST_*` into Portuguese and splitting one round into two. A penalty shootout warning in the UI. Shootout goals landing in the recorded score, when the score should only count regular time plus extra time.
+
+None of those bugs existed in May, and not because I was careless with tests. They did not exist because the state did not exist. The data API I consumed had no knockout fixtures to return while the world had not played the group stage yet. There was no way to reproduce a round-of-16 shootout on May 20th, for the same reason you cannot photograph something that has not happened.
+
+Event software has a class of state that is only born during the event, and that happens exactly once. You cannot test it beforehand and you get no second attempt afterwards. It is the same family as the first Black Friday on a new checkout, the first fiscal close on a new ERP, the first real execution of a disaster recovery plan. What you can do is manufacture the future state by hand, with a synthetic seed, and accept that your version will be close and not identical. Better than nothing, and still not the real thing.
+
+## You can be in a hurry and still be reversible
+
+There is a cliché that says a tight deadline explains technical debt. My experience does not support it, and the clearest example is the moment that looked most like a free pass for a hack.
+
+Five days before launch I had to swap the entire payment gateway. The reason was not technical: the old provider showed my personal name and handle on the checkout screen with no way to customize it. Anyone about to pay 29 reais for a pool saw my personal account staring back. Purchase confidence is a feature, and that one was broken.
+
+The fast path was to change the call, point at the new provider and move on. What I did instead was extract a strategy interface, implement both providers behind it, keep both webhooks live at the same time, and pick the active one through an environment variable. Rollback becomes changing one env var and restarting, with no code deploy.
+
+It cost more than the hack and less than it sounds, because the old logic was not rewritten, it was moved. And it bought the only thing that matters on launch eve: if the new provider misbehaved during a match, the fix took seconds and did not depend on me sitting in front of an editor.
+
+Under pressure, the question that pays off is not which path is faster to write. It is which one I can undo alone, at eleven on a Saturday night.
+
+## For a seasonal product, V2 means cancelled
+
+The project doc has a list called "features not implemented (V2)". Analytics is on it. Shareable cards, a WhatsApp bot, an end-of-tournament wrapped, per-match comments, all on it.
+
+In a continuous product, V2 means later. Users keep showing up on Monday and the item comes back to the table when somebody has room. In a seasonal product, V2 means cancelled with a nicer name. The next World Cup is in 2030. Nothing on that list has anywhere to come back to.
+
+I wrote that list thinking I was prioritizing. I was archiving.
+
+The part that bothers me is not the cutting. Cutting was mandatory, and I would cut almost all of that list again. It is that I cut the one item that would tell me which of the other cuts were the wrong ones. What I have today is an intuition about where the funnel leaked, and intuition is not data, it is what you reach for when you have none.
+
+I spent all of July monitoring the system. It had nothing to tell me.
+
+## What I take from it
+
+In the previous piece about rules I argued that every guardrail charges two prices and we only ever measure one. This one is the version with no guardrail at all: you can finish a project having measured nothing, without ever deciding that out loud.
+
+The measurement does not have to be pretty or complete. A click counter on the invite button and one event for pool created would have been half an hour of work in May, and today they would be the difference between knowing and guessing.
+
+The instrument ships with the first feature it measures. After the final whistle there is nothing left to instrument.
