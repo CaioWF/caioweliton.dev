@@ -50,9 +50,12 @@ const s = StyleSheet.create({
   bulletDot: { width: 10, color: MUTED },
   bulletText: { flex: 1, color: BODY },
   bulletStrong: { fontWeight: 700, color: INK },
-  skill: { flexDirection: 'row', marginBottom: 4 },
-  skillLabel: { width: 124, paddingRight: 8, fontWeight: 700, color: INK },
-  skillItems: { flex: 1, color: BODY, lineHeight: 1.4 },
+  // ATENÇÃO: lineHeight no react-pdf multiplica o fontSize DECLARADO NO MESMO style.
+  // Sem fontSize aqui, ele usa o default de 18pt (não herda os 10 da página) e a linha
+  // fica enorme. Sempre declarar fontSize junto de lineHeight.
+  skill: { flexDirection: 'row', marginBottom: 1 },
+  skillLabel: { width: 124, paddingRight: 8, fontWeight: 700, color: INK, fontSize: 10, lineHeight: 1.3 },
+  skillItems: { flex: 1, color: BODY, fontSize: 10, lineHeight: 1.3 },
   eduRow: { marginBottom: 8 },
   eduHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   eduDegree: { fontWeight: 700, color: INK },
@@ -68,7 +71,10 @@ const s = StyleSheet.create({
   projectHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 1 },
   projectName: { fontSize: 10.5, fontWeight: 700, color: INK },
   projectLink: { fontSize: 9, color: ACCENT, textDecoration: 'none' },
-  projectDesc: { color: BODY, marginBottom: 2, lineHeight: 1.3 },
+  // Só a quebra de linha DENTRO da descrição fica apertada; o espaço entre projetos
+  // (project.marginBottom) e o nome/stack seguem o padrão. fontSize obrigatório: ver
+  // nota do lineHeight em `skill`.
+  projectDesc: { color: BODY, marginBottom: 2, fontSize: 10, lineHeight: 1.3 },
   projectStack: { fontSize: 9, color: MUTED },
 })
 

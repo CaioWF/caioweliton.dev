@@ -2,9 +2,12 @@
 //
 //   pnpm cv                       -> PDF default (pt)
 //   pnpm cv --locale=en           -> PDF default (en)
-//   pnpm cv --format=gupy         -> texto puro pra colar na Gupy
+//   pnpm cv --format=text         -> CV em texto puro (formulários que não aceitam PDF)
 //   pnpm cv --tailored            -> PDF da variante por vaga (data/cv-tailored.local.ts)
-//   pnpm cv --tailored --format=gupy
+//   pnpm cv --tailored --format=text
+//
+// "Gupy" NÃO é formato deste script: o texto "Apresente-se!" (limite 1500 chars) e as 3 habilidades
+// são escritos pelo agente (skill cv-tailor), não renderizados a partir do CvModel.
 //
 // A variante (cv-tailored.local.ts) é montada por vaga pelo Claude Code a partir da JD,
 // é gitignored e descartável. Saída vai pra cv-out/ (gitignored).
@@ -14,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 import type { CvModel } from '../lib/cv/model'
 import { buildCvModel, cvFileName } from '../lib/cv/model'
 import { renderCv } from '../lib/cv/cv-document'
-import { renderCvText } from '../lib/cv/render-gupy'
+import { renderCvText } from '../lib/cv/render-text'
 import { isLocale, type Locale } from '../lib/i18n/locales'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -54,10 +57,17 @@ async function main() {
   mkdirSync(outDir, { recursive: true })
 
   if (format === 'gupy') {
-    const name = opt('out', `${tailored ? 'cv-tailored' : 'cv'}-${locale}.gupy.txt`)
+    console.error('[cv] --format=gupy não existe mais. "Gupy" agora é o texto "Apresente-se!" + 3')
+    console.error('     habilidades, escritos pelo agente (skill cv-tailor), não renderizados aqui.')
+    console.error('     Para o CV em texto puro use --format=text.')
+    process.exit(1)
+  }
+
+  if (format === 'text') {
+    const name = opt('out', `${tailored ? 'cv-tailored' : 'cv'}-${locale}.txt`)
     const path = join(outDir, name)
     writeFileSync(path, renderCvText(model))
-    console.log('[cv] Gupy (texto) ->', path)
+    console.log('[cv] Texto puro ->', path)
   } else {
     const buf = await renderCv(model, locale)
     const name = opt('out', tailored ? `cv-tailored-${locale}.pdf` : cvFileName(locale))

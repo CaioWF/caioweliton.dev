@@ -51,6 +51,38 @@ test('CV pt: ligadura, contato, ordem, grafia e keywords', async () => {
   }
 }, 45000)
 
+// ATS lint (inspirado em resume-ats-beater): buzzword vazio fora, densidade de métrica preservada.
+// Roda no superset default (a variante por vaga é gitignored). Guarda REGRESSÃO: impede que uma
+// reescrita reintroduza jargão oco ou apague todos os números de impacto.
+
+// Buzzwords ocos rejeitados por ATS/recrutador. Stems em minúsculo, casados no texto sem acento.
+const BUZZWORDS = [
+  'proativ', 'dinamic', 'resilien', 'apaixonad', 'entusiast',
+  'visionari', 'guru', 'ninja', 'rockstar', 'workaholic',
+  'antenad', 'mao na massa', 'orientado a resultados',
+]
+
+// Tokens de impacto quantificado (métrica real, não data).
+const METRIC = /\d+\s*%|\d+\s*x\b|r\$\s?[\d.,]+|us\$\s?[\d.,]+|\d+\s*m\+|\d+\+\s*(devs|atletas|usuarios|clientes|projetos|times)/gi
+
+function deaccent(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
+test('CV lint: sem buzzword vazio (ATS)', async () => {
+  const text = deaccent((await extract('pt')).toLowerCase())
+  for (const b of BUZZWORDS) {
+    expect(text, `buzzword oco presente: "${b}"`).not.toContain(deaccent(b))
+  }
+}, 45000)
+
+test('CV lint: densidade de métrica não regride (impacto quantificado)', async () => {
+  const text = deaccent(await extract('pt'))
+  const hits = text.match(METRIC) ?? []
+  // Piso do superset atual: "1M+" e "5+ devs". Impede reescrita que apague os números de impacto.
+  expect(hits.length, `poucos marcadores de métrica: ${hits.join(', ') || 'nenhum'}`).toBeGreaterThanOrEqual(2)
+}, 45000)
+
 test('CV: usa fonte padrão-14 (sem embedding), evita bug de ligadura ToUnicode do react-pdf', async () => {
   const buf = await renderCv(buildCvModel('pt'), 'pt')
   // react-pdf corrompe o ToUnicode de ligaduras fi/fl em QUALQUER fonte EMBUTIDA (IBM Plex,
