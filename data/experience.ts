@@ -25,7 +25,7 @@ export const experience: Job[] = [
             'Integrei **pagamentos via Pagar.me** com **webhooks idempotentes**, eliminando cobranças e baixas de estoque duplicadas.',
             'Escalei a camada de leitura com **réplicas de banco e cache Redis** sobre **Kubernetes (EKS)**, sustentando grandes volumes de requisições em janelas curtas de tráfego e tratando dados pessoais em conformidade com a **LGPD**.',
             'Entreguei features na plataforma de **educação a distância**, incluindo **streaming de vídeo (Vimeo)** para aulas sob demanda.',
-            'Defini a **arquitetura de microsserviços event-driven** (SQS, EventBridge) e os padrões de projeto **adotados por múltiplos times de produto**.',
+            'Defini a **arquitetura de microsserviços event-driven** (SQS, SNS, EventBridge) e os padrões de projeto **adotados por múltiplos times de produto**.',
             '**Mentoria técnica de 5+ devs** júnior e pleno: code review, pair programming e definição de trilhas de crescimento.',
           ],
           en: [
@@ -33,7 +33,7 @@ export const experience: Job[] = [
             'Integrated **payments via Pagar.me** with **idempotent webhooks**, eliminating duplicate charges and stock decrements.',
             'Scaled the read layer with **database replicas and Redis caching** on **Kubernetes (EKS)**, sustaining large request volumes in short traffic windows while handling personal data in compliance with **LGPD**.',
             'Delivered features on the **distance-learning platform**, including **video streaming (Vimeo)** for on-demand classes.',
-            'Defined the **event-driven microservice architecture** (SQS, EventBridge) and the design patterns **adopted across multiple product teams**.',
+            'Defined the **event-driven microservice architecture** (SQS, SNS, EventBridge) and the design patterns **adopted across multiple product teams**.',
             '**Technical mentoring for 5+ junior/mid devs**: code review, pair programming and growth tracks.',
           ],
         },
@@ -55,7 +55,7 @@ export const experience: Job[] = [
         },
       },
     ],
-    stack: ['Node.js', 'TypeScript', 'NestJS', 'AWS', 'Kubernetes', 'Amazon EKS', 'Amazon ECS', 'Lambda', 'SQS', 'EventBridge', 'RDS', 'Amazon S3', 'API Gateway', 'Amazon CloudWatch', 'Amazon Cognito', 'Redis', 'MariaDB', 'PostgreSQL', 'Pagar.me', 'Pix', 'Vimeo', 'Docker', 'Jest', 'Git', 'Location Service'],
+    stack: ['Node.js', 'TypeScript', 'NestJS', 'AWS', 'Kubernetes', 'Amazon EKS', 'Amazon ECS', 'Lambda', 'SQS', 'SNS', 'EventBridge', 'RDS', 'Amazon S3', 'API Gateway', 'Secrets Manager', 'Amazon CloudWatch', 'Amazon Cognito', 'Redis', 'MariaDB', 'PostgreSQL', 'Pagar.me', 'Pix', 'Vimeo', 'Docker', 'Jest', 'Git', 'Location Service'],
   },
   {
     company: 'Grupo Casa Magalhães',

@@ -15,7 +15,7 @@ export const skills: SkillCategory[] = [
   {
     label: { pt: 'AWS', en: 'AWS' },
     icon: '☁',
-    items: [same('Lambda'), same('ECS'), same('EKS'), same('S3'), same('SQS'), same('RDS'), same('EventBridge'), same('API Gateway'), same('CloudWatch'), same('Cognito'), same('SES'), same('CloudFormation'), same('Location Service')],
+    items: [same('Lambda'), same('ECS'), same('EKS'), same('S3'), same('SQS'), same('SNS'), same('RDS'), same('EventBridge'), same('API Gateway'), same('Secrets Manager'), same('CloudWatch'), same('Cognito'), same('SES'), same('CloudFormation'), same('Location Service')],
   },
   {
     label: { pt: 'Dados', en: 'Data' },
