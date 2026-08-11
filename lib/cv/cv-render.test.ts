@@ -22,6 +22,17 @@ async function extract(locale: 'pt' | 'en'): Promise<string> {
   return extractText(await renderCv(buildCvModel(locale), locale))
 }
 
+// Texto quebrado POR PÁGINA (o extractText acima achata tudo numa string só).
+async function extractPages(buf: Buffer): Promise<string[][]> {
+  const doc = await getDocument({ data: new Uint8Array(buf), useSystemFonts: false }).promise
+  const pages: string[][] = []
+  for (let p = 1; p <= doc.numPages; p++) {
+    const content = await (await doc.getPage(p)).getTextContent()
+    pages.push(content.items.map((i: any) => i.str).filter((t: string) => t.trim().length > 0))
+  }
+  return pages
+}
+
 test('CV pt: ligadura, contato, ordem, grafia e keywords', async () => {
   const text = await extract('pt')
 
@@ -90,6 +101,22 @@ test('CV: usa fonte padrão-14 (sem embedding), evita bug de ligadura ToUnicode 
   // /FontFile) e extrai limpo. Este é o guard real; a checagem via pdfjs acima é leniente.
   expect(buf.includes('/FontFile'), 'fonte embutida reintroduz o bug de ligadura fi/fl').toBe(false)
   expect(buf.includes('Helvetica')).toBe(true)
+}, 45000)
+
+// Regressão: o header de seção não pode fechar a página sozinho, com o conteúdo dele
+// caindo só na página seguinte. Acontecia quando o minPresenceAhead do header era menor
+// que o espaço exigido pelo primeiro bloco da seção (header pedia 48, jobHeader pedia 64).
+test('CV: nenhum header de seção fica órfão no fim da página', async () => {
+  const pages = await extractPages(await renderCv(buildCvModel('pt'), 'pt'))
+  const HEADERS = ['COMPETÊNCIAS', 'EXPERIÊNCIA', 'FORMAÇÃO', 'IDIOMAS', 'CERTIFICAÇÕES & PRÊMIOS', 'PROJETOS']
+
+  for (const [i, items] of pages.entries()) {
+    const last = items.at(-1) ?? ''
+    expect(
+      HEADERS.some((h) => last.toUpperCase().includes(h)),
+      `header "${last}" órfão no rodapé da página ${i + 1}`,
+    ).toBe(false)
+  }
 }, 45000)
 
 test('CV en: renderiza sem erro e mantém keywords', async () => {

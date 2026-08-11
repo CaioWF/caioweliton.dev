@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { Document, Page, View, Text, Link, StyleSheet, Font, renderToBuffer } from '@react-pdf/renderer'
 import type { Locale } from '@/lib/i18n/locales'
 import { parseEmphasis } from '@/lib/text/emphasis'
@@ -36,11 +37,12 @@ const s = StyleSheet.create({
   contactSep: { marginRight: 6, color: '#9ca3af' },
   headerRule: { borderBottomWidth: 0.75, borderBottomColor: RULE, marginTop: 12 },
   summary: { marginTop: 12, fontSize: 9.5, color: BODY, lineHeight: 1.5 },
-  section: { marginTop: 16 },
-  h2row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: ACCENT, paddingBottom: 3, marginBottom: 9 },
+  // marginTop mora no header, não num View de seção: ver a nota do SectionHeader sobre
+  // por que as seções não podem ser embrulhadas.
+  h2row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: ACCENT, paddingBottom: 3, marginTop: 16, marginBottom: 9 },
   h2mark: { width: 3, height: 10, backgroundColor: ACCENT, borderRadius: 1, marginRight: 6 },
   h2: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: ACCENT },
-  job: { marginBottom: 12 },
+  jobSpacing: { marginTop: 12 },
   company: { fontSize: 10.5, fontWeight: 700, color: INK },
   roleEntry: { marginTop: 5, paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: '#e5e7eb' },
   roleTitle: { fontSize: 9.5, fontWeight: 700, color: ACCENT },
@@ -53,9 +55,10 @@ const s = StyleSheet.create({
   // ATENÇÃO: lineHeight no react-pdf multiplica o fontSize DECLARADO NO MESMO style.
   // Sem fontSize aqui, ele usa o default de 18pt (não herda os 10 da página) e a linha
   // fica enorme. Sempre declarar fontSize junto de lineHeight.
-  skill: { flexDirection: 'row', marginBottom: 1 },
-  skillLabel: { width: 124, paddingRight: 8, fontWeight: 700, color: INK, fontSize: 10, lineHeight: 1.3 },
-  skillItems: { flex: 1, color: BODY, fontSize: 10, lineHeight: 1.3 },
+  // Linha corrida ("Categoria: item, item"), não duas colunas: o texto usa a largura
+  // inteira e a quebra continua sob o rótulo, o que rende mais conteúdo por página.
+  skillLine: { marginBottom: 1.5, color: BODY, fontSize: 10, lineHeight: 1.3 },
+  skillLabel: { fontWeight: 700, color: INK },
   eduRow: { marginBottom: 8 },
   eduHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   eduDegree: { fontWeight: 700, color: INK },
@@ -78,11 +81,30 @@ const s = StyleSheet.create({
   projectStack: { fontSize: 9, color: MUTED },
 })
 
-function SectionHeader({ children }: { children: string }) {
-  // minPresenceAhead: header não fica órfão no rodapé — se não há espaço pro início
-  // do conteúdo, o header desce junto pra próxima página.
+// NÃO embrulhar seção num <View>. O shouldBreak do @react-pdf/layout só quebra quando
+// `breakingImprovesPresence = previousElements.length > 0`, e previousElements são os
+// irmãos ANTERIORES DENTRO DO MESMO PAI. Header embrulhado = primeiro filho do View da
+// seção = previousElements vazio = minPresenceAhead vira código morto, e o título fica
+// órfão no rodapé com o conteúdo na página seguinte. Como filho direto da Page, o header
+// tem irmãos antes dele e a regra passa a valer. Por isso o marginTop mora no h2row.
+//
+// minPresenceAhead do header cobre o PRIMEIRO BLOCO INTEIRO da seção, não um pedaço:
+// se o header exigir menos espaço que o bloco seguinte, ele passa no próprio teste, o
+// bloco não passa no dele, e o título fica sozinho de novo.
+const AHEAD = {
+  // jobHeader (~18pt) + o que ele próprio exige à frente (64pt: cargo + 1º bullet).
+  experience: 84,
+  // project wrap={false}: nome (~15) + descrição 2 linhas (~26) + stack (~12) + margem (8).
+  projects: 64,
+  // eduRow wrap={false}: grau (~15) + escola (~13) + nota (~12) + margem (8).
+  education: 50,
+  // Linha única (award, idioma, competência) + margem.
+  line: 20,
+} as const
+
+function SectionHeader({ children, ahead }: { children: string; ahead: number }) {
   return (
-    <View style={s.h2row} minPresenceAhead={48} wrap={false}>
+    <View style={s.h2row} minPresenceAhead={ahead} wrap={false}>
       <View style={s.h2mark} />
       <Text style={s.h2}>{children}</Text>
     </View>
@@ -134,83 +156,72 @@ function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
         <View style={s.headerRule} />
         <Text style={s.summary}>{model.summary}</Text>
 
-        <View style={s.section}>
-          <SectionHeader>{t.skills}</SectionHeader>
-          {model.skills.map((c, i) => (
-            <View key={i} style={s.skill} wrap={false}>
-              <Text style={s.skillLabel}>{c.label}</Text>
-              <Text style={s.skillItems}>{c.items.join(', ')}</Text>
-            </View>
-          ))}
-        </View>
+        <SectionHeader ahead={AHEAD.line}>{t.skills}</SectionHeader>
+        {model.skills.map((c, i) => (
+          <Text key={i} style={s.skillLine}>
+            <Text style={s.skillLabel}>{c.label}: </Text>
+            {c.items.join(', ')}
+          </Text>
+        ))}
 
-        <View style={s.section}>
-          <SectionHeader>{t.experience}</SectionHeader>
-          {model.experience.map((j, i) => (
-            <View key={i} style={s.job}>
-              {j.roles.map((r, ri) => (
-                <View key={ri}>
-                  {ri === 0 && (
-                    // minPresenceAhead: empresa não fica órfã (fica junto do cargo/1º bullet).
-                    <View style={s.jobHeader} minPresenceAhead={64}>
-                      <Text style={s.company}>{j.company}</Text>
-                      <Text style={s.period}>{j.period}</Text>
-                    </View>
-                  )}
-                  {/* roleEntry SEM wrap={false}: bullets fluem entre páginas (enchem a página,
-                      evita vão). minPresenceAhead mantém título do cargo com o 1º bullet. */}
-                  <View style={s.roleEntry} minPresenceAhead={40}>
-                    <View style={s.jobHeader}>
-                      <Text style={s.roleTitle}>{r.role}</Text>
-                      <Text style={s.period}>{r.period}</Text>
-                    </View>
-                    {r.bullets.map((b, k) => (
-                      <Bullet key={k} text={b} />
-                    ))}
-                  </View>
+        <SectionHeader ahead={AHEAD.experience}>{t.experience}</SectionHeader>
+        {/* Empresa e cargos são filhos DIRETOS da Page, não aninhados num View de emprego:
+            ver a nota do SectionHeader. Um bloco aninhado que começaria no meio da página
+            é empurrado inteiro pra próxima, deixando um vão enorme. */}
+        {model.experience.map((j, i) => (
+          <Fragment key={j.company}>
+            {/* minPresenceAhead: empresa não fica órfã (fica junto do cargo/1º bullet). */}
+            <View style={[s.jobHeader, i > 0 ? s.jobSpacing : {}]} minPresenceAhead={64}>
+              <Text style={s.company}>{j.company}</Text>
+              <Text style={s.period}>{j.period}</Text>
+            </View>
+            {/* roleEntry SEM wrap={false}: bullets fluem entre páginas (enchem a página,
+                evita vão). minPresenceAhead mantém título do cargo com o 1º bullet. */}
+            {j.roles.map((r, ri) => (
+              <View key={ri} style={s.roleEntry} minPresenceAhead={40}>
+                <View style={s.jobHeader}>
+                  <Text style={s.roleTitle}>{r.role}</Text>
+                  <Text style={s.period}>{r.period}</Text>
                 </View>
-              ))}
-            </View>
-          ))}
-        </View>
-
-        <View style={s.section}>
-          <SectionHeader>{t.education}</SectionHeader>
-          {model.education.map((e, i) => (
-            <View key={i} style={s.eduRow} wrap={false}>
-              <View style={s.eduHeader}>
-                <Text style={s.eduDegree}>{e.degree}</Text>
-                <Text style={s.period}>{e.period}</Text>
+                {r.bullets.map((b, k) => (
+                  <Bullet key={k} text={b} />
+                ))}
               </View>
-              <Text style={s.eduSchool}>{e.school}</Text>
-              {e.note && <Text style={s.eduNote}>{e.note}</Text>}
-            </View>
-          ))}
-        </View>
+            ))}
+          </Fragment>
+        ))}
 
-        <View style={s.section}>
-          <SectionHeader>{t.awards}</SectionHeader>
-          {model.awards.map((a, i) => (
-            <View key={i} style={s.award}>
-              <Text style={s.awardDot}>•</Text>
-              <Text style={s.awardText}>{a}</Text>
+        <SectionHeader ahead={AHEAD.education}>{t.education}</SectionHeader>
+        {model.education.map((e, i) => (
+          <View key={i} style={s.eduRow} wrap={false}>
+            <View style={s.eduHeader}>
+              <Text style={s.eduDegree}>{e.degree}</Text>
+              <Text style={s.period}>{e.period}</Text>
             </View>
-          ))}
-        </View>
+            <Text style={s.eduSchool}>{e.school}</Text>
+            {e.note && <Text style={s.eduNote}>{e.note}</Text>}
+          </View>
+        ))}
 
-        <View style={s.section}>
-          <SectionHeader>{t.languages}</SectionHeader>
-          {model.languages.map((l, i) => (
-            <View key={i} style={s.langRow}>
-              <Text style={s.langName}>{l.name}</Text>
-              <Text style={s.langLevel}>{l.level}</Text>
-            </View>
-          ))}
-        </View>
+        <SectionHeader ahead={AHEAD.line}>{t.awards}</SectionHeader>
+        {model.awards.map((a, i) => (
+          <View key={i} style={s.award}>
+            <Text style={s.awardDot}>•</Text>
+            <Text style={s.awardText}>{a}</Text>
+          </View>
+        ))}
+
+        <SectionHeader ahead={AHEAD.line}>{t.languages}</SectionHeader>
+        {model.languages.map((l, i) => (
+          <View key={i} style={s.langRow}>
+            <Text style={s.langName}>{l.name}</Text>
+            <Text style={s.langLevel}>{l.level}</Text>
+          </View>
+        ))}
 
         {model.projects.length > 0 && (
-          <View style={s.section}>
-            <SectionHeader>{t.projects}</SectionHeader>
+          <>
+            <SectionHeader ahead={AHEAD.projects}>{t.projects}</SectionHeader>
             {model.projects.map((p, i) => (
               <View key={i} style={s.project} wrap={false}>
                 <View style={s.projectHeader}>
@@ -225,7 +236,7 @@ function CvDocument({ model, locale }: { model: CvModel; locale: Locale }) {
                 <Text style={s.projectStack}>{p.stack.join(', ')}</Text>
               </View>
             ))}
-          </View>
+          </>
         )}
       </Page>
     </Document>
