@@ -10,7 +10,7 @@ export const skills: SkillCategory[] = [
   {
     label: { pt: 'Back-end', en: 'Back-end' },
     icon: '⚙',
-    items: [same('Node.js'), same('TypeScript'), same('NestJS'), same('REST APIs'), same('Swagger / OpenAPI'), same('JWT'), { pt: 'Microsserviços', en: 'Microservices' }, { pt: 'Event-driven', en: 'Event-driven' }, same('Jest')],
+    items: [same('Node.js'), same('TypeScript'), same('NestJS'), same('REST APIs'), same('Swagger / OpenAPI'), same('JWT'), { pt: 'Microsserviços', en: 'Microservices' }, { pt: 'Event-driven', en: 'Event-driven' }, same('Jest'), { pt: 'Testes de unidade e integração', en: 'Unit and integration testing' }],
   },
   {
     label: { pt: 'AWS', en: 'AWS' },
@@ -35,7 +35,7 @@ export const skills: SkillCategory[] = [
   {
     label: { pt: 'DevOps', en: 'DevOps' },
     icon: '⎈',
-    items: [same('Docker'), same('Kubernetes'), same('GitHub Actions'), same('Jenkins'), same('AWS CodePipeline'), same('Git')],
+    items: [same('Docker'), same('Kubernetes'), same('GitHub Actions'), same('Jenkins'), same('AWS CodePipeline'), same('Git'), same('Gitflow')],
   },
   {
     label: { pt: 'Observabilidade', en: 'Observability' },
@@ -45,7 +45,7 @@ export const skills: SkillCategory[] = [
   {
     label: { pt: 'Arquitetura & Liderança', en: 'Architecture & Leadership' },
     icon: '◇',
-    items: [same('Clean Architecture'), same('Multitenancy'), { pt: 'Design de Soluções', en: 'Solution Design' }, { pt: 'Liderança Técnica', en: 'Technical Leadership' }, same('Code Review'), { pt: 'Mentoria', en: 'Mentoring' }, same('Agile')],
+    items: [same('Clean Architecture'), same('SOLID'), { pt: 'Padrões de Projeto', en: 'Design Patterns' }, { pt: 'Algoritmos e Estruturas de Dados', en: 'Algorithms and Data Structures' }, same('Multitenancy'), { pt: 'Design de Soluções', en: 'Solution Design' }, { pt: 'Liderança Técnica', en: 'Technical Leadership' }, same('Code Review'), { pt: 'Mentoria', en: 'Mentoring' }, same('Agile')],
   },
   {
     label: { pt: 'IA', en: 'AI' },
