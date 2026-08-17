@@ -14,11 +14,11 @@ export type Job = {
 export const experience: Job[] = [
   {
     company: 'Compass UOL',
-    period: { pt: 'jan 2022 - atual', en: 'Jan 2022 - Present' },
+    period: { pt: 'jan 2022 - ago 2026', en: 'Jan 2022 - Aug 2026' },
     roles: [
       {
         title: { pt: 'Desenvolvedor de Software Sênior', en: 'Senior Software Developer' },
-        period: { pt: 'set 2022 - atual', en: 'Sep 2022 - Present' },
+        period: { pt: 'set 2022 - ago 2026', en: 'Sep 2022 - Aug 2026' },
         bullets: {
           pt: [
             'Reescrevi o fluxo de vendas para sustentar **picos de Black Friday sem overselling** em uma base de **1M+ atletas**: tabela de estoque dedicada e bloqueio de linha (SELECT ... FOR UPDATE) para serializar a baixa de estoque sob alta concorrência.',

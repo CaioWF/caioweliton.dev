@@ -1,8 +1,8 @@
 export const now = {
-  updated: '2026-06',
+  updated: '2026-08',
   working: {
-    pt: 'Senior SWE na Compass UOL, com foco em modernização de sistemas legados e back-ends de alta concorrência. Tocando o iBolão (SaaS de bolão da Copa) no estúdio CQ Labs.',
-    en: 'Senior SWE at Compass UOL, focused on legacy modernization and high-concurrency back-ends. Building iBolão (World Cup betting-pool SaaS) at CQ Labs studio.',
+    pt: 'Buscando nova oportunidade como Senior SWE, com foco em back-ends de alta concorrência, modernização de legado e desenvolvimento com agentes de IA. Estive na Compass UOL até ago 2026. Tocando o iBolão (SaaS de bolão da Copa) no estúdio CQ Labs e o Keel (scaffolder spec-driven, open source).',
+    en: 'Looking for a new Senior SWE role, focused on high-concurrency back-ends, legacy modernization and AI-agent development. I was at Compass UOL until Aug 2026. Building iBolão (World Cup betting-pool SaaS) at CQ Labs studio and Keel (open-source spec-driven scaffolder).',
   },
   studying: {
     pt: ['Go', 'AWS Solutions Architect Professional', 'AI aplicada a workflows de dev'],
